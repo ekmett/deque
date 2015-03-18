@@ -11,6 +11,16 @@
 
 module Data.Deque.NonCat where
 
+import Data.Type.Bool
+import qualified Data.Sequence as Seq
+
+data Nat = Z | S Nat deriving (Read, Show, Eq, Ord)
+data Color = Red | Yellow | Green deriving (Read, Show, Eq, Ord)
+data Trend = Lo | Hi deriving (Read, Show, Eq, Ord)
+
+type T = True
+type F = False
+
 data Buffer q i j where
   B0 :: Buffer q i i
   B1 :: !(q i j) -> Buffer q i j
@@ -667,8 +677,3 @@ instance Snoc Deque where
   Deque (BigG (GG b (B3 i j k)) y z@TinyL{})      |> a = Deque $ BigY (GY b (B4 i j k a)) y z
   Deque (BigG (GG b (B3 i j k)) y z@BigR{})       |> a = Deque $ BigY (GY b (B4 i j k a)) y (fixup' z)
   Deque (BigG (GG b (B3 i j k)) y z@BigG{})       |> a = Deque $ BigY (GY b (B4 i j k a)) y z
-
-data Foo a b where
-  F :: Int -> Foo () ()
-
-deriving instance Show (Foo a b)
