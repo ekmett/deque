@@ -18,6 +18,8 @@ module Data.Deque.Cat where
 import Control.DeepSeq
 import Data.Type.Bool
 import qualified Data.Deque.NonCat as NC
+import qualified Data.Sequence as Seq
+import Data.List
 
 type T = True
 type F = False
@@ -1781,3 +1783,25 @@ instance NFData (Foo a b) where
   rnf !_ = ()
 
 deriving instance Show (Foo a b)
+
+mkDeq :: Int -> Int -> Deque (Closed Green) (Closed Green) Foo () ()
+mkDeq m n = foldr (\a d -> catenate d $ iterate (push (F a)) empty !! m) empty [1..n]
+
+sumDeq :: Deque (Closed Green) (Closed Green) Foo () () -> Int
+sumDeq = sum . unfoldr go
+  where
+    go :: Deque (Closed Green) (Closed Green) Foo () () -> Maybe (Int, Deque (Closed Green) (Closed Green) Foo () ())
+    go d = case pop d of
+      F a :| d' -> Just (a, d')
+      Empty -> Nothing
+
+mkSeq :: Int -> Int -> Seq.Seq (Foo () ())
+mkSeq m n = foldr (\a d -> (d Seq.><) $ iterate ((Seq.<|) (F a)) Seq.empty !! m) Seq.empty [1..n]
+
+sumSeq :: Seq.Seq (Foo () ()) -> Int
+sumSeq = sum . unfoldr go
+  where
+    go :: Seq.Seq (Foo () ()) -> Maybe (Int, Seq.Seq (Foo () ()))
+    go s = case Seq.viewl s of
+      F a Seq.:< d' -> Just (a, d')
+      Seq.EmptyL -> Nothing
