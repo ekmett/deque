@@ -423,19 +423,10 @@ onlyL bl@B2{} (Triple (LR ll D0 lr))           = Triple (L0 (catenateB bl ll) lr
 onlyL bl@B2{} (Triple (LR ll (D2 lt rt) lr))   = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 rt) lr) cap2
 onlyL bl@B2{} (Triple (LR ll (DOL ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
 onlyL bl@B2{} (Triple (LR ll (DOR ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
-onlyL bl@B3{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
-onlyL bl@B4{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
-onlyL bl@B5{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
-onlyL bl@B6{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
-onlyL bl@B7{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
+onlyL bl      (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
 onlyL bl@B1{} (Cap (LO ll (D2 lt rt) lr) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 (cap rt cap1)) lr) cap2
 onlyL bl@B1{} (Cap (LO ll (DOR ot) lr) cap1)   = Cap (LY (catenateB bl ll) (DOL ot) lr) cap1
-onlyL bl@B2{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL bl@B3{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL bl@B4{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL bl@B5{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL bl@B6{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL bl@B7{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
+onlyL bl      (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) (plugR d cap1) lr)
 onlyL bl      (Cap (LY ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugL cap1 d
 onlyL bl      (Triple (LG ll d lr))            = Triple (LG (catenateB bl ll) d lr)
 
@@ -619,19 +610,10 @@ onlyR (Triple (RR rl D0 rr))           br@B2{} = Triple (R0 rl (catenateB rr br)
 onlyR (Triple (RR rl (D2 lt rt) rr))   br@B2{} = case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 rt) (catenateB rr br)) cap2
 onlyR (Triple (RR rl (DOR ot) rr))     br@B2{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
 onlyR (Triple (RR rl (DOL ot) rr))     br@B2{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
-onlyR (Triple (RR rl d rr))            br@B3{} = Triple (RG rl d (catenateB rr br))
-onlyR (Triple (RR rl d rr))            br@B4{} = Triple (RG rl d (catenateB rr br))
-onlyR (Triple (RR rl d rr))            br@B5{} = Triple (RG rl d (catenateB rr br))
-onlyR (Triple (RR rl d rr))            br@B6{} = Triple (RG rl d (catenateB rr br))
-onlyR (Triple (RR rl d rr))            br@B7{} = Triple (RG rl d (catenateB rr br))
+onlyR (Triple (RR rl d rr))            br      = Triple (RG rl d (catenateB rr br))
 onlyR (Cap (RO rl (D2 lt rt) rr) cap1) br@B1{} = case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 (cap rt cap1)) (catenateB rr br)) cap2
 onlyR (Cap (RO rl (DOR ot) rr) cap1)   br@B1{} = Cap (RY rl (DOL ot) (catenateB rr br)) cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B2{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B3{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B4{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B5{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B6{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR (Cap (RO rl d rr) cap1)          br@B7{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
+onlyR (Cap (RO rl d rr) cap1)          br      = Triple (RG rl (plugR d cap1) (catenateB rr br))
 onlyR (Cap (RY rl d rr) cap1)          br      = Triple (RG rl d2 (catenateB rr br)) where d2 = plugL cap1 d
 onlyR (Triple (RG rl d rr))            br      = Triple (RG rl d (catenateB rr br))
 
@@ -645,7 +627,7 @@ fixLeft d = case d of
   DOR c -> only c
   (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2@B9{}))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) D0 s2))
   (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2@B8{}))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) D0 s2))
-  (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2))) -> only (Triple (O0 (catenateB (catenateB (catenateB p1 s1) p2) s2)))
+  (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2)))      -> only (Triple (O0 (catenateB (catenateB (catenateB p1 s1) p2) s2)))
   (D2 (Triple (LG p1 D0 s1)) (Triple (RG p2 d2 s2))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) d2 s2))
   (D2 (Triple (LG p1 D0 s1)) (Triple (RR p2 d2 s2))) -> only (Triple (OXR (catenateB (catenateB p1 s1) p2) d2 s2))
   (D2 (Triple (LG p1 D0 s1)) (Cap (RO p2 d2 s2) c)) -> only (Cap (OXO (catenateB (catenateB p1 s1) p2) d2 s2) c)
