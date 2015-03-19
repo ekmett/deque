@@ -24,21 +24,21 @@ import Data.List
 type T = True
 type F = False
 
-data Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j where
-  B1 :: !(q i j) -> Buffer T F F F F F F F F q i j
-  B2 :: !(q j k) -> !(q i j) -> Buffer F T F F F F F F F q i k
-  B3 :: !(q k l) -> !(q j k) -> !(q i j) -> Buffer F F T F F F F F F q i l
-  B4 :: !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer F F F T F F F F F q i m
-  B5 :: !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer F F F F T F F F F q i n
-  B6 :: !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer F F F F F T F F F q i o
-  B7 :: !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer F F F F F F T F F q i p
-  B8 :: !(q p r) -> !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j)  -> Buffer F F F F F F F T F q i r
-  B9 :: !(NC.Deque q s t) -> !(q r s) -> !(q p r) -> !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> !(NC.Deque q h i) -> Buffer F F F F F F F F T q h t
+data Buffer q i j where
+  B1 :: !(q i j) -> Buffer q i j
+  B2 :: !(q j k) -> !(q i j) -> Buffer q i k
+  B3 :: !(q k l) -> !(q j k) -> !(q i j) -> Buffer q i l
+  B4 :: !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer q i m
+  B5 :: !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer q i n
+  B6 :: !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer q i o
+  B7 :: !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> Buffer q i p
+  B8 :: !(q p r) -> !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j)  -> Buffer q i r
+  B9 :: !(NC.Deque q s t) -> !(q r s) -> !(q p r) -> !(q o p) -> !(q n o) -> !(q m n) -> !(q l m) -> !(q k l) -> !(q j k) -> !(q i j) -> !(NC.Deque q h i) -> Buffer q h t
 
-instance NFData (Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j) where
+instance NFData (Buffer q i j) where
   rnf !_ = ()
 
-instance Show (Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j) where
+instance Show (Buffer q i j) where
   show B1{} = "B1"
   show B2{} = "B2"
   show B3{} = "B3"
@@ -49,7 +49,7 @@ instance Show (Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j) where
   show B8{} = "B8"
   show B9{} = "B9"
 
-pushB :: q j k -> Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j -> Buffer F k1 k2 k3 k4 k5 k6 k7 (k8 || k9) q i k
+pushB :: q j k -> Buffer q i j -> Buffer q i k
 pushB a (B1 b)                         = B2 a b
 pushB a (B2 b c)                       = B3 a b c
 pushB a (B3 b c d)                     = B4 a b c d
@@ -60,7 +60,7 @@ pushB a (B7 b c d e f g h)             = B8 a b c d e f g h
 pushB a (B8 b c d e f g h i)           = B9 NC.empty a b c d e f g h i NC.empty
 pushB a (B9 ncl b c d e f g h i j ncr) = B9 (a NC.<| ncl) b c d e f g h i j ncr
 
-injectB :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q j k -> q i j -> Buffer F k1 k2 k3 k4 k5 k6 k7 (k8 || k9) q i k
+injectB :: Buffer q j k -> q i j -> Buffer q i k
 injectB (B1 b)                         a = B2 b a
 injectB (B2 b c)                       a = B3 b c a
 injectB (B3 b c d)                     a = B4 b c d a
@@ -74,12 +74,12 @@ injectB (B9 ncl b c d e f g h i j ncr) a = B9 ncl b c d e f g h i j (ncr NC.|> a
 data HPair q r i k where
   H :: !(q j k) -> !(r i j) -> HPair q r i k
 
-data ViewB k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j where
-  NoB :: ViewB T F F F F F F F F q i i
-  Shift :: Buffer k2 k3 k4 k5 k6 k7 k8 k9 F q i j -> ViewB F k2 k3 k4 k5 k6 k7 k8 k9 q i j
-  NoShift :: Buffer F F F F F F F F T q i j -> ViewB F F F F F F F F T q i j
+data ViewB q i j where
+  NoB :: ViewB q i i
+  Shift :: Buffer q i j -> ViewB q i j
+  NoShift :: Buffer q i j -> ViewB q i j
 
-popB :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i k -> HPair q (ViewB k1 k2 k3 k4 k5 k6 k7 k8 k9 q) i k
+popB :: Buffer q i k -> HPair q (ViewB q) i k
 popB (B1 a)               = a `H` NoB
 popB (B2 a b)             = a `H` Shift (B1 b)
 popB (B3 a b c)           = a `H` Shift (B2 b c)
@@ -94,7 +94,7 @@ popB (B9 dp a b c d e f g h i ds) = case NC.uncons dp of
     s1 NC.:| rem1 -> a `H` NoShift (B9 NC.empty b c d e f g h i s1 rem1)
     NC.Empty -> a `H` Shift (B8 b c d e f g h i)
 
-ejectB :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i k -> HPair (ViewB k1 k2 k3 k4 k5 k6 k7 k8 k9 q) q i k
+ejectB :: Buffer q i k -> HPair (ViewB q) q i k
 ejectB (B1 a)               = NoB `H` a
 ejectB (B2 a b)             = Shift (B1 a) `H` b
 ejectB (B3 a b c)           = Shift (B2 a b) `H` c
@@ -110,268 +110,205 @@ ejectB (B9 dp a b c d e f g h i ds) = case NC.unsnoc ds of
     NC.Empty -> Shift (B8 a b c d e f g h) `H` i
 
 data StoredTriple q i j where
-  S1 :: !(Buffer F F k3 k4 k5 k6 k7 k8 k9 q j k) -> StoredTriple q j k
-  S3 :: !(Buffer F F k3 k4 k5 k6 k7 k8 k9 q l m) -> Deque (Closed lg) (Closed rg) (StoredTriple q) k l -> !(Buffer F F c3 c4 c5 c6 c7 c8 c9 q j k) -> StoredTriple q j m
+  S1 :: !(Buffer q j k) -> StoredTriple q j k
+  S3 :: !(Buffer q l m) -> Deque (StoredTriple q) k l -> !(Buffer q j k) -> StoredTriple q j m
 
 instance NFData (StoredTriple q i j) where
   rnf !_ = ()
 
 deriving instance Show (StoredTriple q i j)
 
-data OnlyTriple ge q i j where
-  O0  :: !(Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q j k) -> OnlyTriple (Closed Green) q j k
-  ORX :: !(Buffer F F F F T F F F F q l m) -> !(Deque (Closed Green) (Closed Green) (StoredTriple q) k l) -> !(Buffer F F F F c5 c6 c7 c8 c9 q j k) -> OnlyTriple (Closed Red) q j m
-  OXR :: !(Buffer F F F F F k6 k7 k8 k9 q l m) -> !(Deque (Closed Green) (Closed Green) (StoredTriple q) k l) -> !(Buffer F F F F T F F F F q j k) -> OnlyTriple (Closed Red) q j m
-  OOX :: !(Buffer F F F F F T F F F q l m) -> !(Deque (Closed Green) (Open r s t u) (StoredTriple q) k l) -> !(Buffer F F F F F c6 c7 c8 c9 q j k) -> OnlyTriple (Open r s t u) q j m
-  OXO :: !(Buffer F F F F F F k7 k8 k9 q l m) -> !(Deque (Closed Green) (Open r s t u) (StoredTriple q) k l) -> !(Buffer F F F F F T F F F q j k) -> OnlyTriple (Open r s t u) q j m
-  OYX :: !(Buffer F F F F F F T F F q l m) -> !(Deque (Open r s t u) (Closed kr) (StoredTriple q) k l) -> !(Buffer F F F F F F c7 c8 c9 q j k) -> OnlyTriple (Open r s t u) q j m
-  OGY :: !(Buffer F F F F F F F k8 k9 q l m) -> !(Deque (Open r s t u) (Closed kr) (StoredTriple q) k l) -> !(Buffer F F F F F F T F F q j k) -> OnlyTriple (Open r s t u) q j m
-  OGG :: !(Buffer F F F F F F F k8 k9 q l m) -> !(Deque (Closed k1) (Closed k2) (StoredTriple q) k l) -> !(Buffer F F F F F F F c8 c9 q j k) -> OnlyTriple (Closed Green) q j m
+data OnlyTriple q i j where
+  O0  :: !(Buffer q j k) -> OnlyTriple q j k
+  ORX :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OXR :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OOX :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OXO :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OYX :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OGY :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
+  OGG :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
 
 instance NFData (OnlyTriple ge q i j) where
   rnf !_ = ()
 
 deriving instance Show (OnlyTriple ge q i j)
 
-data LeftTriple ge q i j where
-  L0 :: !(Buffer F F F F k5 k6 k7 k8 k9 q k l) -> !(Buffer F T F F F F F F F q j k) -> LeftTriple (Closed Green) q j l
-  LR :: !(Buffer F F F F T F F F F q l m) -> !(Deque (Closed Green) (Closed Green) (StoredTriple q) k l) -> !(Buffer F T F F F F F F F q j k) -> LeftTriple (Closed Red) q j m
-  LO :: !(Buffer F F F F F T F F F q l m) -> !(Deque (Closed Green) (Open r s t u) (StoredTriple q) k l) -> !(Buffer F T F F F F F F F q j k) -> LeftTriple (Open r s t u) q j m
-  LY :: !(Buffer F F F F F F T F F q l m) -> !(Deque (Open r s t u) (Closed cr) (StoredTriple q) k l) -> !(Buffer F T F F F F F F F q j k) -> LeftTriple (Open r s t u) q j m
-  LG :: !(Buffer F F F F F F F c8 c9 q l m) -> !(Deque (Closed cl) (Closed cr) (StoredTriple q) k l) -> !(Buffer F T F F F F F F F q j k) -> LeftTriple (Closed Green) q j m
+data LeftTriple q i j where
+  L0 :: !(Buffer q k l) -> !(Buffer q j k) -> LeftTriple q j l
+  LR :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
+  LO :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
+  LY :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
+  LG :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
 
 instance NFData (LeftTriple ge q i j) where
   rnf !_ = ()
 
 deriving instance Show (LeftTriple ge q i j)
 
-data Cap (r :: Genus * -> (* -> * -> *) -> * -> * -> *) (s :: Genus *) (t :: * -> * -> *) u b where
-  Opening :: Cap r (Open r s t u) s t u
-  Triple :: Repairable r => !(r g q i j) -> Cap r g q i j
-  Cap :: Repairable r' => !(r (Open r' q' s t) q i j) -> !(r' (Closed k) q' s t) -> Cap r (Closed k) q i j
+data Cap (r :: (* -> * -> *) -> * -> * -> *) (t :: * -> * -> *) u b where
+  Opening :: Cap r s t u
+  Triple :: Repairable r => !(r q i j) -> Cap r q i j
+  Cap :: Repairable r' => !(r q i j) -> !(r' q' s t) -> Cap r q i j
 
-class Repairable (r :: Genus * -> (* -> * -> *) -> * -> * -> *) where
-  repair :: r (Closed c) q i j -> r (Closed Green) q i j
+class Repairable (r :: (* -> * -> *) -> * -> * -> *) where
+  repair :: r q i j -> r q i j
 
-instance Show (Cap r s t u b) where
+instance Show (Cap r t u b) where
   show Opening = "Opening"
   show (Triple _) = "Triple"
   show (Cap _ _) = "Cap"
 
-data Nope (a :: Genus *) (b :: * -> * -> *) c d
+data Nope (b :: * -> * -> *) c d
 
 data Colour = Red | Green
 
 data Dir = Le | Ri
 
-data Genus k where
-  Open :: (Genus k -> (k -> k -> k) -> k -> k -> k) -> (k -> k -> k) -> k -> k -> Genus k
-  Closed :: Colour -> Genus k
+data RightTriple (q :: * -> * -> *) i j where
+  R0 :: !(Buffer q k l) -> !(Buffer q j k) -> RightTriple q j l
+  RR :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
+  RO :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
+  RY :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
+  RG :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
 
-data RightTriple (ge :: Genus *) (q :: * -> * -> *) i j where
-  R0 :: !(Buffer F T F F F F F F F q k l) -> !(Buffer F F F F k5 k6 k7 k8 k9 q j k) -> RightTriple (Closed Green) q j l
-  RR :: !(Buffer F T F F F F F F F q l m) -> !(Deque (Closed Green) (Closed Green) (StoredTriple q) k l) -> !(Buffer F F F F T F F F F q j k) -> RightTriple (Closed Red) q j m
-  RO :: !(Buffer F T F F F F F F F q l m) -> !(Deque (Closed Green) (Open r s t u) (StoredTriple q) k l) -> !(Buffer F F F F F T F F F q j k) -> RightTriple (Open r s t u) q j m
-  RY :: !(Buffer F T F F F F F F F q l m) -> !(Deque (Open r s t u) (Closed kr) (StoredTriple q) k l) -> !(Buffer F F F F F F T F F q j k) -> RightTriple (Open r s t u) q j m
-  RG :: !(Buffer F T F F F F F F F q l m) -> !(Deque (Closed kl) (Closed kr) (StoredTriple q) k l) -> !(Buffer F F F F F F F c8 c9 q j k) -> RightTriple (Closed Green) q j m
-
-instance NFData (RightTriple ge q i j) where
+instance NFData (RightTriple q i j) where
   rnf !_ = ()
 
-deriving instance Show (RightTriple ge q i j)
+deriving instance Show (RightTriple q i j)
 
-data Deque lg rg q i j where
-  D0 :: Deque (Closed Green) (Closed Green) q i i
-  D2 :: !(Cap LeftTriple lg q j k) -> !(Cap RightTriple rg q i j) -> Deque lg rg q i k
-  DOL :: !(Cap OnlyTriple b q i j) -> Deque b (Closed Green) q i j
-  DOR :: !(Cap OnlyTriple b q i j) -> Deque (Closed Green) b q i j
+data Deque q i j where
+  D0 :: Deque q i i
+  D2 :: !(Cap LeftTriple q j k) -> !(Cap RightTriple q i j) -> Deque q i k
+  DOL :: !(Cap OnlyTriple q i j) -> Deque q i j
+  DOR :: !(Cap OnlyTriple q i j) -> Deque q i j
 
-instance NFData (Deque lg rg q i j) where
+instance NFData (Deque q i j) where
   rnf !_ = ()
 
-deriving instance Show (Deque lg rg q i j)
+deriving instance Show (Deque q i j)
 
-cap :: Repairable r' => Cap r (Open r' s t u) q i j -> r' (Closed k) s t u -> Cap r (Closed k) q i j
+cap :: Repairable r' => Cap r q i j -> r' s t u -> Cap r q i j
 cap Opening t = Triple t
 cap (Triple c) t = Cap c t
 
-singleton :: q i j -> Deque (Closed Green) (Closed Green) q i j
+singleton :: q i j -> Deque q i j
 singleton a = DOL (Triple (O0 (B1 a)))
 
-empty :: Deque (Closed Green) (Closed Green) q i i
+empty :: Deque q i i
 empty = D0
 
-plugL :: Repairable r => r (Closed k) s t u -> Deque (Open r s t u) rg q i j -> Deque (Closed k) rg q i j
+plugL :: Repairable r => r s t u -> Deque q i j -> Deque q i j
 plugL c (D2 l r) = D2 (cap l c) r
 plugL c (DOL ot) = DOL (cap ot c)
 
-plugR :: Repairable r => Deque lg (Open r s t u) q i j -> r (Closed k) s t u -> Deque lg (Closed k) q i j
+plugR :: Repairable r => Deque q i j -> r s t u -> Deque q i j
 plugR (D2 l rt) c = D2 l (cap rt c)
 plugR (DOR ot) c = DOR (cap ot c)
 
-data ViewCap r k q i j where
-  ViewCap :: Repairable r' => Cap r (Open r' s t u) q i j -> r' (Closed k) s t u -> ViewCap r k q i j
+data ViewCap r q i j where
+  ViewCap :: Repairable r' => Cap r q i j -> r' s t u -> ViewCap r q i j
 
-uncap :: Repairable r => Cap r (Closed k) q i j -> ViewCap r k q i j
+uncap :: Repairable r => Cap r q i j -> ViewCap r q i j
 uncap (Triple c) = ViewCap Opening c
 uncap (Cap o c) = ViewCap (Triple o) c
 
-push :: q j k -> Deque (Closed Green) (Closed Green) q i j -> Deque (Closed Green) (Closed Green) q i k
+push :: q j k -> Deque q i j -> Deque q i k
 push a D0       = DOL (Triple (O0 (B1 a)))
-push a (D2 l r) = D2 (pushLeftG a l) r
-push a (DOL o)  = DOL (pushOnlyG a o)
-push a (DOR o)  = DOR (pushOnlyG a o)
+push a (D2 l r) = D2 (pushLeft a l) r
+push a (DOL o)  = DOL (pushOnly a o)
+push a (DOR o)  = DOR (pushOnly a o)
 
-pushWith :: q j k -> Deque (Closed kl) (Closed kr) q i j -> ((forall cl cr. Deque (Closed cl) (Closed cr) q i k -> g) -> g)
-pushWith a D0       = \f -> f $ DOL (Triple (O0 (B1 a)))
-pushWith a (D2 l r) = \f -> pushLeft a l (\l' -> f $ D2 l' r)
-pushWith a (DOL o)  = \f -> pushOnly a o (\o' -> f $ DOL o')
-pushWith a (DOR o)  = \f -> pushOnly a o (\o' -> f $ DOR o')
-
-inject :: Deque (Closed Green) (Closed Green) q j k -> q i j -> Deque (Closed Green) (Closed Green) q i k
+inject :: Deque q j k -> q i j -> Deque q i k
 inject D0       a = DOL (Triple (O0 (B1 a)))
-inject (D2 l r) a = D2 l (injectRightG r a)
-inject (DOL o)  a = DOL (injectOnlyG o a)
-inject (DOR o)  a = DOR (injectOnlyG o a)
+inject (D2 l r) a = D2 l (injectRight r a)
+inject (DOL o)  a = DOL (injectOnly o a)
+inject (DOR o)  a = DOR (injectOnly o a)
 
-injectWith :: Deque (Closed kl) (Closed kr) q j k -> q i j -> ((forall cl cr. Deque (Closed cl) (Closed cr) q i k -> g) -> g)
-injectWith D0       a = \f -> f $ DOL (Triple (O0 (B1 a)))
-injectWith (D2 l r) a = \f -> injectRight r a (\r' -> f $ D2 l r')
-injectWith (DOL o)  a = \f -> injectOnly o a (\o' -> f $ DOL o')
-injectWith (DOR o)  a = \f -> injectOnly o a (\o' -> f $ DOR o')
+injectRight :: Cap RightTriple q j k -> q i j -> Cap RightTriple q i k
+injectRight (Triple (R0 bl br))              a      = Triple (R0 bl (injectB br a))
+injectRight (Cap (RO bl (D2 lt rt) br) cap1) a      = case uncap lt of ViewCap lt2 cap2 -> Cap (RY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
+injectRight (Cap (RO bl (DOR ot) br) cap1)   a      = Cap (RY bl (DOL ot) (injectB br a)) cap1
+injectRight (Cap (RY bl (D2 lt rt) br) cap1) a      = Triple (RG bl (D2 (cap lt cap1) rt) (injectB br a))
+injectRight (Cap (RY bl (DOL ot) br) cap1)   a      = Triple (RG bl (DOL (cap ot cap1)) (injectB br a))
+injectRight (Triple (RG bl d br))            a      = Triple (RG bl d (injectB br a))
+injectRight (Triple (RR bl (D2 lt rt) br))   a      = case uncap rt of ViewCap rt2 cap2 -> Cap (RO bl (D2 lt rt2) (injectB br a)) cap2
+injectRight (Triple (RR bl (DOL ot) br))     a      = case uncap ot of ViewCap ot2 cap2 -> Cap (RO bl (DOR ot2) (injectB br a)) cap2
+injectRight (Triple (RR bl (DOR ot) br))     a      = case uncap ot of ViewCap ot2 cap2 -> Cap (RO bl (DOR ot2) (injectB br a)) cap2
+injectRight (Triple (RR bl D0 br))           a      = Triple (R0 bl (injectB br a))
 
-injectRight :: Cap RightTriple (Closed cl) q j k -> q i j -> ((forall cr. Cap RightTriple (Closed cr) q i k -> g) -> g)
-injectRight (Triple (R0 bl br))              a      = \f -> f $ Triple (R0 bl (injectB br a))
-injectRight (Cap (RO bl (D2 lt rt) br) cap1) a      = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (RY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectRight (Cap (RO bl (DOR ot) br) cap1)   a      = \f -> f $ Cap (RY bl (DOL ot) (injectB br a)) cap1
-injectRight (Cap (RY bl (D2 lt rt) br) cap1) a      = \f -> f $ Triple (RG bl (D2 (cap lt cap1) rt) (injectB br a))
-injectRight (Cap (RY bl (DOL ot) br) cap1)   a      = \f -> f $ Triple (RG bl (DOL (cap ot cap1)) (injectB br a))
-injectRight (Triple (RG bl d br))            a      = \f -> f $ Triple (RG bl d (injectB br a))
-injectRight (Triple (RR bl (D2 lt rt) br))   a      = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (RO bl (D2 lt rt2) (injectB br a)) cap2
-injectRight (Triple (RR bl (DOL ot) br))     a      = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RO bl (DOR ot2) (injectB br a)) cap2
-injectRight (Triple (RR bl (DOR ot) br))     a      = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RO bl (DOR ot2) (injectB br a)) cap2
-injectRight (Triple (RR bl D0 br))           a      = \f -> f $ Triple (R0 bl (injectB br a))
+injectOnly :: Cap OnlyTriple q j k -> q i j -> Cap OnlyTriple q i k
+injectOnly (Triple (O0 b))                        a = Triple (O0 (injectB b a))
+injectOnly (Cap (OOX bl d br) cap1)               a = Cap (OOX bl d (injectB br a)) cap1
+injectOnly (Cap (OXO bl@B7{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
+injectOnly (Cap (OXO bl@B7{} (DOR ot) br) cap1)   a = Cap (OYX bl (DOL ot) (injectB br a)) cap1
+injectOnly (Cap (OXO bl@B8{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
+injectOnly (Cap (OXO bl@B8{} (DOR ot) br) cap1)   a = Cap (OGY bl (DOL ot) (injectB br a)) cap1
+injectOnly (Cap (OXO bl@B9{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
+injectOnly (Cap (OXO bl@B9{} (DOR ot) br) cap1)   a = Cap (OGY bl (DOL ot) (injectB br a)) cap1
+injectOnly (Cap (OYX bl d br) cap1)               a = Cap (OYX bl d (injectB br a)) cap1
+injectOnly (Cap (OGY bl d br) cap1)               a = Triple (OGG bl (plugL cap1 d) (injectB br a))
+injectOnly (Triple (OGG bl d br))                 a = Triple (OGG bl d (injectB br a))
+injectOnly (Triple (ORX bl d br))                 a = Triple (ORX bl d (injectB br a))
+injectOnly (Triple (OXR bl D0 br))                a = Triple (O0 (injectB (catenateB bl br) a))
+injectOnly (Triple (OXR bl@B6{} (D2 lt rt) br))   a = case uncap rt of ViewCap rt2 cap2 -> Cap (OOX bl (D2 lt rt2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B6{} (DOL ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B6{} (DOR ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B7{} (D2 lt rt) br))   a = case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B7{} (DOL ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B7{} (DOR ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B8{} (D2 lt rt) br))   a = case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B8{} (DOL ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B8{} (DOR ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B9{} (D2 lt rt) br))   a = case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B9{} (DOL ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+injectOnly (Triple (OXR bl@B9{} (DOR ot) br))     a = case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
 
-injectRightG :: Cap RightTriple (Closed Green) q j k -> q i j -> Cap RightTriple (Closed Green) q i k
-injectRightG (Triple (R0 bl br))              a      = Triple (R0 bl (injectB br a))
-injectRightG (Cap (RO bl (D2 lt rt) br) cap1) a      = case uncap lt of ViewCap lt2 cap2 -> Cap (RY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectRightG (Cap (RO bl (DOR ot) br) cap1)   a      = Cap (RY bl (DOL ot) (injectB br a)) cap1
-injectRightG (Cap (RY bl (D2 lt rt) br) cap1) a      = Triple (RG bl (D2 (cap lt cap1) rt) (injectB br a))
-injectRightG (Cap (RY bl (DOL ot) br) cap1)   a      = Triple (RG bl (DOL (cap ot cap1)) (injectB br a))
-injectRightG (Triple (RG bl d br))            a      = Triple (RG bl d (injectB br a))
+pushLeft :: q j k -> Cap LeftTriple q i j -> Cap LeftTriple q i k
+pushLeft a (Triple (L0 bl br))                   = Triple (L0 (pushB a bl) br)
+pushLeft a (Cap (LO bl (D2 lt rt) br) cap1)      = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
+pushLeft a (Cap (LO bl (DOR ot) br) cap1)        = Cap (LY (pushB a bl) (DOL ot) br) cap1
+pushLeft a (Cap (LY bl (D2 lt rt) br) cap1)      = Triple (LG (pushB a bl) (D2 (cap lt cap1) rt) br)
+pushLeft a (Cap (LY bl (DOL ot) br) cap1)        = Triple (LG (pushB a bl) (DOL (cap ot cap1)) br)
+pushLeft a (Triple (LR bl D0 br))                = Triple (L0 (pushB a bl) br)
+pushLeft a (Triple (LR bl (D2 lt rt) br))        = case uncap rt of ViewCap rt2 cap2 -> Cap (LO (pushB a bl) (D2 lt rt2) br) cap2
+pushLeft a (Triple (LR bl (DOL ot) br))          = case uncap ot of ViewCap ot2 cap2 -> Cap (LO (pushB a bl) (DOR ot2) br) cap2
+pushLeft a (Triple (LR bl (DOR ot) br))          = case uncap ot of ViewCap ot2 cap2 -> Cap (LO (pushB a bl) (DOR ot2) br) cap2
+pushLeft a (Triple (LG bl d br))                 = Triple (LG (pushB a bl) d br)
 
-injectOnly :: Cap OnlyTriple (Closed cl) q j k -> q i j -> ((forall cr. Cap OnlyTriple (Closed cr) q i k -> g) -> g)
-injectOnly (Triple (O0 b))                        a = \f -> f $ Triple (O0 (injectB b a))
-injectOnly (Cap (OOX bl d br) cap1)               a = \f -> f $ Cap (OOX bl d (injectB br a)) cap1
-injectOnly (Cap (OXO bl@B7{} (D2 lt rt) br) cap1) a = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OYX bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnly (Cap (OXO bl@B7{} (DOR ot) br) cap1)   a = \f -> f $ Cap (OYX bl (DOL ot) (injectB br a)) cap1
-injectOnly (Cap (OXO bl@B8{} (D2 lt rt) br) cap1) a = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnly (Cap (OXO bl@B8{} (DOR ot) br) cap1)   a = \f -> f $ Cap (OGY bl (DOL ot) (injectB br a)) cap1
-injectOnly (Cap (OXO bl@B9{} (D2 lt rt) br) cap1) a = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnly (Cap (OXO bl@B9{} (DOR ot) br) cap1)   a = \f -> f $ Cap (OGY bl (DOL ot) (injectB br a)) cap1
-injectOnly (Cap (OYX bl d br) cap1)               a = \f -> f $ Cap (OYX bl d (injectB br a)) cap1
-injectOnly (Cap (OGY bl d br) cap1)               a = \f -> f $ Triple (OGG bl (plugL cap1 d) (injectB br a))
-injectOnly (Triple (OGG bl d br))                 a = \f -> f $ Triple (OGG bl d (injectB br a))
-injectOnly (Triple (ORX bl d br))                 a = \f -> f $ Triple (ORX bl d (injectB br a))
-injectOnly (Triple (OXR bl D0 br))                a = \f -> f $ Triple (O0 (injectB (catenateB bl br) a))
-injectOnly (Triple (OXR bl@B6{} (D2 lt rt) br))   a = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OOX bl (D2 lt rt2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B6{} (DOL ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B6{} (DOR ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B7{} (D2 lt rt) br))   a = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B7{} (DOL ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B7{} (DOR ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B8{} (D2 lt rt) br))   a = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B8{} (DOL ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B8{} (DOR ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B9{} (D2 lt rt) br))   a = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OXO bl (D2 lt rt2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B9{} (DOL ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
-injectOnly (Triple (OXR bl@B9{} (DOR ot) br))     a = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OXO bl (DOR ot2) (injectB br a)) cap2
+pushOnly :: q j k -> Cap OnlyTriple (Closed cl) q i j -> Cap OnlyTriple q i k
+pushOnly a (Triple (O0 b))                        = Triple (O0 (pushB a b))
+pushOnly a (Cap (OOX bl d br@B6{}) cap1)          = Cap (OXO (pushB a bl) d br) cap1
+pushOnly a (Cap (OOX bl (D2 lt rt) br@B7{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
+pushOnly a (Cap (OOX bl (DOR ot) br@B7{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
+pushOnly a (Cap (OOX bl (D2 lt rt) br@B8{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
+pushOnly a (Cap (OOX bl (DOR ot) br@B8{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
+pushOnly a (Cap (OOX bl (D2 lt rt) br@B9{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
+pushOnly a (Cap (OOX bl (DOR ot) br@B9{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
+pushOnly a (Cap (OXO bl d br) cap1)               = Cap (OXO (pushB a bl) d br) cap1
+pushOnly a (Cap (OYX bl d br@B7{}) cap1)          = Cap (OGY (pushB a bl) d br) cap1
+pushOnly a (Cap (OYX bl (D2 lt rt) br@B8{}) cap1) = Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
+pushOnly a (Cap (OYX bl (DOL ot) br@B8{}) cap1)   = Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
+pushOnly a (Cap (OYX bl (D2 lt rt) br@B9{}) cap1) = Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
+pushOnly a (Cap (OYX bl (DOL ot) br@B9{}) cap1)   = Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
+pushOnly a (Cap (OGY bl d br) cap1)               = Cap (OGY (pushB a bl) d br) cap1
+pushOnly a (Triple (OGG bl d br))                 = Triple (OGG (pushB a bl) d br)
+pushOnly a (Triple (ORX bl d br@B5{}))            = Triple (OXR (pushB a bl) d br)
+pushOnly a (Triple (ORX bl D0         br))        = Triple (O0 (catenateB (pushB a bl) br))
+pushOnly a (Triple (ORX bl (D2 lt rt) br@B6{}))   = case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
+pushOnly a (Triple (ORX bl (DOL ot)   br@B6{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (DOR ot)   br@B6{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (D2 lt rt) br@B7{}))   = case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
+pushOnly a (Triple (ORX bl (DOL ot)   br@B7{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (DOR ot)   br@B7{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (D2 lt rt) br@B8{}))   = case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
+pushOnly a (Triple (ORX bl (DOL ot)   br@B8{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (DOR ot)   br@B8{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (D2 lt rt) br@B9{}))   = case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
+pushOnly a (Triple (ORX bl (DOL ot)   br@B9{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (ORX bl (DOR ot)   br@B9{}))   = case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
+pushOnly a (Triple (OXR bl d br))                 = Triple (OXR (pushB a bl) d br)
 
-injectOnlyG :: Cap OnlyTriple (Closed Green) q j k -> q i j -> Cap OnlyTriple (Closed Green) q i k
-injectOnlyG (Triple (O0 b))                        a = Triple (O0 (injectB b a))
-injectOnlyG (Cap (OOX bl d br) cap1)               a = Cap (OOX bl d (injectB br a)) cap1
-injectOnlyG (Cap (OXO bl@B7{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnlyG (Cap (OXO bl@B7{} (DOR ot) br) cap1)   a = Cap (OYX bl (DOL ot) (injectB br a)) cap1
-injectOnlyG (Cap (OXO bl@B8{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnlyG (Cap (OXO bl@B8{} (DOR ot) br) cap1)   a = Cap (OGY bl (DOL ot) (injectB br a)) cap1
-injectOnlyG (Cap (OXO bl@B9{} (D2 lt rt) br) cap1) a = case uncap lt of ViewCap lt2 cap2 -> Cap (OGY bl (D2 lt2 (cap rt cap1)) (injectB br a)) cap2
-injectOnlyG (Cap (OXO bl@B9{} (DOR ot) br) cap1)   a = Cap (OGY bl (DOL ot) (injectB br a)) cap1
-injectOnlyG (Cap (OYX bl d br) cap1)               a = Cap (OYX bl d (injectB br a)) cap1
-injectOnlyG (Cap (OGY bl d br) cap1)               a = Triple (OGG bl (plugL cap1 d) (injectB br a))
-injectOnlyG (Triple (OGG bl d br))                 a = Triple (OGG bl d (injectB br a))
-
-pushOnlyG :: q j k -> Cap OnlyTriple (Closed Green) q i j -> Cap OnlyTriple (Closed Green) q i k
-pushOnlyG a (Triple (O0 b))                        = Triple (O0 (pushB a b))
-pushOnlyG a (Cap (OOX bl d br@B6{}) cap1)          = Cap (OXO (pushB a bl) d br) cap1
-pushOnlyG a (Cap (OOX bl (D2 lt rt) br@B7{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnlyG a (Cap (OOX bl (DOR ot) br@B7{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnlyG a (Cap (OOX bl (D2 lt rt) br@B8{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnlyG a (Cap (OOX bl (DOR ot) br@B8{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnlyG a (Cap (OOX bl (D2 lt rt) br@B9{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnlyG a (Cap (OOX bl (DOR ot) br@B9{}) cap1)   = Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnlyG a (Cap (OXO bl d br) cap1)               = Cap (OXO (pushB a bl) d br) cap1
-pushOnlyG a (Cap (OYX bl d br@B7{}) cap1)          = Cap (OGY (pushB a bl) d br) cap1
-pushOnlyG a (Cap (OYX bl (D2 lt rt) br@B8{}) cap1) = Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushOnlyG a (Cap (OYX bl (DOL ot) br@B8{}) cap1)   = Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
-pushOnlyG a (Cap (OYX bl (D2 lt rt) br@B9{}) cap1) = Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushOnlyG a (Cap (OYX bl (DOL ot) br@B9{}) cap1)   = Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
-pushOnlyG a (Cap (OGY bl d br) cap1)               = Cap (OGY (pushB a bl) d br) cap1
-pushOnlyG a (Triple (OGG bl d br))                 = Triple (OGG (pushB a bl) d br)
-
-pushLeft :: q j k -> Cap LeftTriple (Closed cl) q i j -> ((forall cr. Cap LeftTriple (Closed cr) q i k -> g) -> g)
-pushLeft a (Triple (L0 bl br))                   = \f -> f $ Triple (L0 (pushB a bl) br)
-pushLeft a (Cap (LO bl (D2 lt rt) br) cap1)      = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (LY (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushLeft a (Cap (LO bl (DOR ot) br) cap1)        = \f -> f $ Cap (LY (pushB a bl) (DOL ot) br) cap1
-pushLeft a (Cap (LY bl (D2 lt rt) br) cap1)      = \f -> f $ Triple (LG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushLeft a (Cap (LY bl (DOL ot) br) cap1)        = \f -> f $ Triple (LG (pushB a bl) (DOL (cap ot cap1)) br)
-pushLeft a (Triple (LR bl D0 br))                = \f -> f $ Triple (L0 (pushB a bl) br)
-pushLeft a (Triple (LR bl (D2 lt rt) br))        = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (LO (pushB a bl) (D2 lt rt2) br) cap2
-pushLeft a (Triple (LR bl (DOL ot) br))          = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LO (pushB a bl) (DOR ot2) br) cap2
-pushLeft a (Triple (LR bl (DOR ot) br))          = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LO (pushB a bl) (DOR ot2) br) cap2
-pushLeft a (Triple (LG bl d br))                 = \f -> f $ Triple (LG (pushB a bl) d br)
-
-pushLeftG :: q j k -> Cap LeftTriple (Closed Green) q i j -> Cap LeftTriple (Closed Green) q i k
-pushLeftG a (Triple (L0 bl br))                   = Triple (L0 (pushB a bl) br)
-pushLeftG a (Cap (LO bl (D2 lt rt) br) cap1)      = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushLeftG a (Cap (LO bl (DOR ot) br) cap1)        = Cap (LY (pushB a bl) (DOL ot) br) cap1
-pushLeftG a (Cap (LY bl (D2 lt rt) br) cap1)      = Triple (LG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushLeftG a (Cap (LY bl (DOL ot) br) cap1)        = Triple (LG (pushB a bl) (DOL (cap ot cap1)) br)
-pushLeftG a (Triple (LG bl d br))                 = Triple (LG (pushB a bl) d br)
-
-pushOnly :: q j k -> Cap OnlyTriple (Closed cl) q i j -> ((forall cr. Cap OnlyTriple (Closed cr) q i k -> g) -> g)
-pushOnly a (Triple (O0 b))                        = \f -> f $ Triple (O0 (pushB a b))
-pushOnly a (Cap (OOX bl d br@B6{}) cap1)          = \f -> f $ Cap (OXO (pushB a bl) d br) cap1
-pushOnly a (Cap (OOX bl (D2 lt rt) br@B7{}) cap1) = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnly a (Cap (OOX bl (DOR ot) br@B7{}) cap1)   = \f -> f $ Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnly a (Cap (OOX bl (D2 lt rt) br@B8{}) cap1) = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnly a (Cap (OOX bl (DOR ot) br@B8{}) cap1)   = \f -> f $ Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnly a (Cap (OOX bl (D2 lt rt) br@B9{}) cap1) = \f -> f $ case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
-pushOnly a (Cap (OOX bl (DOR ot) br@B9{}) cap1)   = \f -> f $ Cap (OYX (pushB a bl) (DOL ot) br) cap1
-pushOnly a (Cap (OXO bl d br) cap1)               = \f -> f $ Cap (OXO (pushB a bl) d br) cap1
-pushOnly a (Cap (OYX bl d br@B7{}) cap1)          = \f -> f $ Cap (OGY (pushB a bl) d br) cap1
-pushOnly a (Cap (OYX bl (D2 lt rt) br@B8{}) cap1) = \f -> f $ Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushOnly a (Cap (OYX bl (DOL ot) br@B8{}) cap1)   = \f -> f $ Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
-pushOnly a (Cap (OYX bl (D2 lt rt) br@B9{}) cap1) = \f -> f $ Triple (OGG (pushB a bl) (D2 (cap lt cap1) rt) br)
-pushOnly a (Cap (OYX bl (DOL ot) br@B9{}) cap1)   = \f -> f $ Triple (OGG (pushB a bl) (DOL (cap ot cap1)) br)
-pushOnly a (Cap (OGY bl d br) cap1)               = \f -> f $ Cap (OGY (pushB a bl) d br) cap1
-pushOnly a (Triple (OGG bl d br))                 = \f -> f $ Triple (OGG (pushB a bl) d br)
-pushOnly a (Triple (ORX bl d br@B5{}))            = \f -> f $ Triple (OXR (pushB a bl) d br)
-pushOnly a (Triple (ORX bl D0         br))        = \f -> f $ Triple (O0 (catenateB (pushB a bl) br))
-pushOnly a (Triple (ORX bl (D2 lt rt) br@B6{}))   = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
-pushOnly a (Triple (ORX bl (DOL ot)   br@B6{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (DOR ot)   br@B6{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (D2 lt rt) br@B7{}))   = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
-pushOnly a (Triple (ORX bl (DOL ot)   br@B7{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (DOR ot)   br@B7{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (D2 lt rt) br@B8{}))   = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
-pushOnly a (Triple (ORX bl (DOL ot)   br@B8{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (DOR ot)   br@B8{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (D2 lt rt) br@B9{}))   = \f -> f $ case uncap rt of ViewCap rt2 cap2 -> Cap (OOX (pushB a bl) (D2 lt rt2) br) cap2
-pushOnly a (Triple (ORX bl (DOL ot)   br@B9{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (ORX bl (DOR ot)   br@B9{}))   = \f -> f $ case uncap ot of ViewCap ot2 cap2 -> Cap (OOX (pushB a bl) (DOR ot2) br) cap2
-pushOnly a (Triple (OXR bl d br))                 = \f -> f $ Triple (OXR (pushB a bl) d br)
-
-catenateB :: (c9 ~ (b9 || a9 || (a1 && b8) || (a2 && b7) ||(a3 && b6) || (a4  && b5) || (a5 && b4) || (a6 && b3) || (a7 && b2) || (a8 && b1) || (a2 && b8) ||(a3 && b7) || (a4  && b6) || (a5 && b5) || (a6 && b4) || (a7 && b3) || (a8 && b2) || (a3 && b8) || (a4  && b7) || (a5 && b6) || (a6 && b5) || (a7 && b4) || (a8 && b3) || (a4  && b8) || (a5 && b7) || (a6 && b6) || (a7 && b5) || (a8 && b4) || (a5 && b8) || (a6 && b7) || (a7 && b6) || (a8 && b5) || (a6 && b8) || (a7 && b7) || (a8 && b6) || (a7 && b8) || (a8 && b7) || (a8 && b8)), c8 ~ ((a1 && b7) || (a2 && b6) ||(a3 && b5) || (a4  && b4) || (a5 && b3) || (a6 && b2) || (a7 && b1)), c7 ~ ((a1 && b6) || (a2 && b5) || (a3 && b4) || (a4 && b3) || (a5 && b2) || (a6 && b1)), c6 ~ ((a1 && b5) || (a2 && b4) || (a3 && b3) || (a4 && b2) || (a5 && b1)), c5 ~ ((a1 && b4) || (a2 && b3) || (a3 && b2) || (a4 && b1)), c4 ~ ((a1 && b3) || (a2 && b2) || (a3 && b1)), c3 ~ ((a1 && b2) || (a2 && b1)), c2 ~ (a1 && b1)) => Buffer a1 a2 a3 a4 a5 a6 a7 a8 a9 q j k -> Buffer b1 b2 b3 b4 b5 b6 b7 b8 b9 q i j -> Buffer F c2 c3 c4 c5 c6 c7 c8 c9 q i k
+catenateB :: Buffer q j k -> Buffer q i j -> Buffer q i k
 catenateB B9{} B9{} = error "Bad"
 catenateB (B1 a) br@B1{} = pushB a br
 catenateB (B1 a) br@B2{} = pushB a br
@@ -454,7 +391,7 @@ catenateB bl@B9{} (B6 a b c d e f) = injectB (injectB (injectB (injectB (injectB
 catenateB bl@B9{} (B7 a b c d e f g) = injectB (injectB (injectB (injectB (injectB (injectB (injectB bl a) b) c) d) e) f) g
 catenateB bl@B9{} (B8 a b c d e f g h) = injectB (injectB (injectB (injectB (injectB (injectB (injectB (injectB bl a) b) c) d) e) f) g) h
 
-catenate :: Deque (Closed Green) (Closed Green) q j k -> Deque (Closed Green) (Closed Green) q i j -> Deque (Closed Green) (Closed Green) q i k
+catenate :: Deque q j k -> Deque q i j -> Deque q i k
 -- Trivial
 catenate D0 a = a
 catenate a D0 = a
@@ -488,38 +425,53 @@ catenate (D2 lt rt) (DOR (Triple (O0 br))) = D2 lt (onlyR rt br)
 -- Case 1
 catenate d e = D2 (fixLeft d) (fixRight e)
 
-catenate' :: Deque (Closed cl1) (Closed cr1) q j k -> Deque (Closed cl2) (Closed cr2) q i j -> (forall cl3 cr3. Deque (Closed cl3) (Closed cr3) q i k -> g) -> g
+catenate' :: Deque q j k -> Deque q i j -> Deque q i k
 -- Trivial
-catenate' D0 a f = f a
-catenate' a D0 f = f a
+catenate' D0 a = a
+catenate' a D0 = a
 -- Case 4:
-catenate' (DOL (Triple (O0 bl@B8{}))) (DOL (Triple (O0 br@B8{}))) f = f $ DOL (Triple (OGG bl D0 br))
-catenate' (DOL (Triple (O0 bl)))      (DOL (Triple (O0 br)))      f = f $ DOL (Triple (O0 (catenateB bl br)))
-catenate' (DOL (Triple (O0 bl@B8{}))) (DOR (Triple (O0 br@B8{}))) f = f $ DOL (Triple (OGG bl D0 br))
-catenate' (DOL (Triple (O0 bl)))      (DOR (Triple (O0 br)))      f = f $ DOL (Triple (O0 (catenateB bl br)))
-catenate' (DOR (Triple (O0 bl@B8{}))) (DOL (Triple (O0 br@B8{}))) f = f $ DOL (Triple (OGG bl D0 br))
-catenate' (DOR (Triple (O0 bl)))      (DOL (Triple (O0 br)))      f = f $ DOL (Triple (O0 (catenateB bl br)))
-catenate' (DOR (Triple (O0 bl@B8{}))) (DOR (Triple (O0 br@B8{}))) f = f $ DOL (Triple (OGG bl D0 br))
-catenate' (DOR (Triple (O0 bl)))      (DOR (Triple (O0 br)))      f = f $ DOL (Triple (O0 (catenateB bl br)))
--- -- Case 2:
-catenate' (DOL (Triple (O0 bl))) (D2 lt rt) f = onlyL' bl lt (f . (flip D2 rt))
-catenate' (DOR (Triple (O0 bl))) (D2 lt rt) f = onlyL' bl lt (f . (flip D2 rt))
--- -- Case 3
-catenate' (D2 lt rt) (DOL (Triple (O0 br))) f = onlyR' rt br (f . D2 lt)
-catenate' (D2 lt rt) (DOR (Triple (O0 br))) f = onlyR' rt br (f . D2 lt)
+catenate' (DOL (Triple (O0 bl@B8{}))) (DOL (Triple (O0 br@B8{}))) = DOL (Triple (OGG bl D0 br))
+catenate' (DOL (Triple (O0 bl)))      (DOL (Triple (O0 br)))      = DOL (Triple (O0 (catenateB bl br)))
+catenate' (DOL (Triple (O0 bl@B8{}))) (DOR (Triple (O0 br@B8{}))) = DOL (Triple (OGG bl D0 br))
+catenate' (DOL (Triple (O0 bl)))      (DOR (Triple (O0 br)))      = DOL (Triple (O0 (catenateB bl br)))
+catenate' (DOR (Triple (O0 bl@B8{}))) (DOL (Triple (O0 br@B8{}))) = DOL (Triple (OGG bl D0 br))
+catenate' (DOR (Triple (O0 bl)))      (DOL (Triple (O0 br)))      = DOL (Triple (O0 (catenateB bl br)))
+catenate' (DOR (Triple (O0 bl@B8{}))) (DOR (Triple (O0 br@B8{}))) = DOL (Triple (OGG bl D0 br))
+catenate' (DOR (Triple (O0 bl)))      (DOR (Triple (O0 br)))      = DOL (Triple (O0 (catenateB bl br)))
+-- Case 2:
+catenate' (DOL (Triple (O0 bl))) (D2 lt rt) = D2 (onlyL bl lt) rt
+catenate' (DOR (Triple (O0 bl))) (D2 lt rt) = D2 (onlyL bl lt) rt
+-- Case 3
+catenate' (D2 lt rt) (DOL (Triple (O0 br))) = D2 lt (onlyR rt br)
+catenate' (D2 lt rt) (DOR (Triple (O0 br))) = R2 lt (onlyR rt br)
 -- Case 1
-catenate' d e f = fixLeft' d $ \d' -> fixRight' e $ \e' -> f $ D2 d' e'
+catenate' d e = D2 (fixLeft d) (fixRight e)
 
-onlyL :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q j k -> Cap LeftTriple (Closed Green) q i j -> Cap LeftTriple (Closed Green) q i k
+onlyL :: Buffer q j k -> Cap LeftTriple q i j -> Cap LeftTriple q i k
 onlyL bl@B8{} (Triple (L0 ll lr))              = Triple (LG bl (push (S1 ll) D0) lr)
 onlyL bl@B8{} (Cap (LO ll d lr) cap1)          = Triple (LG bl (push (S1 ll) (plugR d cap1)) lr)
-onlyL bl@B8{} (Cap (LY ll d lr) cap1)          = Triple (pushWith (S1 ll) (plugL cap1 d) (\e -> LG bl e lr))
-onlyL bl@B8{} (Triple (LG ll d lr))            = Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
+onlyL bl@B8{} (Cap (LY ll d lr) cap1)          = Triple (LG bl (push (S1 ll) (plugL cap1 d)) lr)
+onlyL bl@B8{} (Triple (LG ll d lr))            = Triple (LG bl (push (S1 ll) d) lr)
+onlyL bl@B8{} (Triple (LR ll d lr))            = Triple (LG bl (push (S1 ll) d) lr)
 onlyL bl@B9{} (Triple (L0 ll lr))              = Triple (LG bl (push (S1 ll) D0) lr)
 onlyL bl@B9{} (Cap (LO ll d lr) cap1)          = Triple (LG bl (push (S1 ll) (plugR d cap1)) lr)
-onlyL bl@B9{} (Cap (LY ll d lr) cap1)          = Triple (pushWith (S1 ll) (plugL cap1 d) (\e -> LG bl e lr))
-onlyL bl@B9{} (Triple (LG ll d lr))            = Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
+onlyL bl@B9{} (Cap (LY ll d lr) cap1)          = Triple (LG bl (push (S1 ll) (plugL cap1 d)) lr)
+onlyL bl@B9{} (Triple (LG ll d lr))            = Triple (LG bl (push (S1 ll) d) lr)
+onlyL bl@B9{} (Triple (LR ll d lr))            = Triple (LG bl (push (S1 ll) d) lr)
 onlyL bl      (Triple (L0 ll lr))              = Triple (L0 (catenateB bl ll) lr)
+onlyL bl@B1{} (Triple (LR ll D0 lr))           = Triple (L0 (catenateB bl ll) lr)
+onlyL bl@B1{} (Triple (LR ll (D2 lt rt) lr))   = case uncap rt of ViewCap rt2 cap2 -> Cap (LO (catenateB bl ll) (D2 lt rt2) lr) cap2
+onlyL bl@B1{} (Triple (LR ll (DOL ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LO (catenateB bl ll) (DOR ot2) lr) cap2
+onlyL bl@B1{} (Triple (LR ll (DOR ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LO (catenateB bl ll) (DOR ot2) lr) cap2
+onlyL bl@B2{} (Triple (LR ll D0 lr))           = Triple (L0 (catenateB bl ll) lr)
+onlyL bl@B2{} (Triple (LR ll (D2 lt rt) lr))   = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 rt) lr) cap2
+onlyL bl@B2{} (Triple (LR ll (DOL ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
+onlyL bl@B2{} (Triple (LR ll (DOR ot) lr))     = case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
+onlyL bl@B3{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
+onlyL bl@B4{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
+onlyL bl@B5{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
+onlyL bl@B6{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
+onlyL bl@B7{} (Triple (LR ll d lr))            = Triple (LG (catenateB bl ll) d lr)
 onlyL bl@B1{} (Cap (LO ll (D2 lt rt) lr) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 (cap rt cap1)) lr) cap2
 onlyL bl@B1{} (Cap (LO ll (DOR ot) lr) cap1)   = Cap (LY (catenateB bl ll) (DOL ot) lr) cap1
 onlyL bl@B2{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
@@ -531,52 +483,31 @@ onlyL bl@B7{} (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2
 onlyL bl      (Cap (LY ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugL cap1 d
 onlyL bl      (Triple (LG ll d lr))            = Triple (LG (catenateB bl ll) d lr)
 
-onlyL' :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q j k -> Cap LeftTriple (Closed cl1) q i j -> (forall cl2. Cap LeftTriple (Closed cl2) q i k -> g) -> g
-onlyL' bl@B8{} (Triple (L0 ll lr))              f = f $ Triple (LG bl (push (S1 ll) D0) lr)
-onlyL' bl@B8{} (Cap (LO ll d lr) cap1)          f = f $ Triple (pushWith (S1 ll) (plugR d cap1) (\e -> LG bl e lr))
-onlyL' bl@B8{} (Cap (LY ll d lr) cap1)          f = f $ Triple (pushWith (S1 ll) (plugL cap1 d) (\e -> LG bl e lr))
-onlyL' bl@B8{} (Triple (LG ll d lr))            f = f $ Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
-onlyL' bl@B8{} (Triple (LR ll d lr))            f = f $ Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
-onlyL' bl@B9{} (Triple (L0 ll lr))              f = f $ Triple (LG bl (push (S1 ll) D0) lr)
-onlyL' bl@B9{} (Cap (LO ll d lr) cap1)          f = f $ Triple (pushWith (S1 ll) (plugR d cap1) $ \e -> LG bl e lr)
-onlyL' bl@B9{} (Cap (LY ll d lr) cap1)          f = f $ Triple (pushWith (S1 ll) (plugL cap1 d) (\e -> LG bl e lr))
-onlyL' bl@B9{} (Triple (LG ll d lr))            f = f $ Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
-onlyL' bl@B9{} (Triple (LR ll d lr))            f = f $ Triple (pushWith (S1 ll) d (\e -> LG bl e lr))
-onlyL' bl      (Triple (L0 ll lr))              f = f $ Triple (L0 (catenateB bl ll) lr)
-onlyL' bl@B1{} (Triple (LR ll D0 lr))           f = f $ Triple (L0 (catenateB bl ll) lr)
-onlyL' bl@B1{} (Triple (LR ll (D2 lt rt) lr))   f = f $ case uncap rt of ViewCap rt2 cap2 -> Cap (LO (catenateB bl ll) (D2 lt rt2) lr) cap2
-onlyL' bl@B1{} (Triple (LR ll (DOL ot) lr))     f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LO (catenateB bl ll) (DOR ot2) lr) cap2
-onlyL' bl@B1{} (Triple (LR ll (DOR ot) lr))     f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LO (catenateB bl ll) (DOR ot2) lr) cap2
-onlyL' bl@B2{} (Triple (LR ll D0 lr))           f = f $ Triple (L0 (catenateB bl ll) lr)
-onlyL' bl@B2{} (Triple (LR ll (D2 lt rt) lr))   f = f $ case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 rt) lr) cap2
-onlyL' bl@B2{} (Triple (LR ll (DOL ot) lr))     f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
-onlyL' bl@B2{} (Triple (LR ll (DOR ot) lr))     f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (LY (catenateB bl ll) (DOL ot2) lr) cap2
-onlyL' bl@B3{} (Triple (LR ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-onlyL' bl@B4{} (Triple (LR ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-onlyL' bl@B5{} (Triple (LR ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-onlyL' bl@B6{} (Triple (LR ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-onlyL' bl@B7{} (Triple (LR ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-onlyL' bl@B1{} (Cap (LO ll (D2 lt rt) lr) cap1) f = f $ case uncap lt of ViewCap lt2 cap2 -> Cap (LY (catenateB bl ll) (D2 lt2 (cap rt cap1)) lr) cap2
-onlyL' bl@B1{} (Cap (LO ll (DOR ot) lr) cap1)   f = f $ Cap (LY (catenateB bl ll) (DOL ot) lr) cap1
-onlyL' bl@B2{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl@B3{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl@B4{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl@B5{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl@B6{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl@B7{} (Cap (LO ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugR d cap1
-onlyL' bl      (Cap (LY ll d lr) cap1)          f = f $ Triple (LG (catenateB bl ll) d2 lr) where d2 = plugL cap1 d
-onlyL' bl      (Triple (LG ll d lr))            f = f $ Triple (LG (catenateB bl ll) d lr)
-
-onlyR :: Cap RightTriple (Closed Green) q j k -> Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j -> Cap RightTriple (Closed Green) q i k
+onlyR :: Cap RightTriple q j k -> Buffer q i j -> Cap RightTriple q i k
 onlyR (Triple (R0 rl rr))              br@B8{} = Triple (RG rl (inject D0 (S1 rr)) br)
 onlyR (Cap (RO rl d rr) cap1)          br@B8{} = Triple (RG rl (inject (plugR d cap1) (S1 rr)) br)
-onlyR (Cap (RY rl d rr) cap1)          br@B8{} = Triple (injectWith (plugL cap1 d) (S1 rr) (\e -> RG rl e br))
-onlyR (Triple (RG rl d rr))            br@B8{} = Triple (injectWith d (S1 rr) (\e -> RG rl e br))
+onlyR (Cap (RY rl d rr) cap1)          br@B8{} = Triple (RG rl (inject (plugL cap1 d) (S1 rr)) br)
+onlyR (Triple (RG rl d rr))            br@B8{} = Triple (RG rl (inject d (S1 rr)) br)
+onlyR (Triple (RR rl d rr))            br@B8{} = Triple (RG rl (inject d (S1 rr)) br)
 onlyR (Triple (R0 rl rr))              br@B9{} = Triple (RG rl (inject D0 (S1 rr)) br)
 onlyR (Cap (RO rl d rr) cap1)          br@B9{} = Triple (RG rl (inject (plugR d cap1) (S1 rr)) br)
-onlyR (Cap (RY rl d rr) cap1)          br@B9{} = Triple (injectWith (plugL cap1 d) (S1 rr) (\e -> RG rl e br))
-onlyR (Triple (RG rl d rr))            br@B9{} = Triple (injectWith d (S1 rr) (\e -> RG rl e br))
+onlyR (Cap (RY rl d rr) cap1)          br@B9{} = Triple (RG rl (inject (plugL cap1 d) (S1 rr)) br)
+onlyR (Triple (RG rl d rr))            br@B9{} = Triple (RG rl (inject d (S1 rr)) br)
+onlyR (Triple (RR rl d rr))            br@B9{} = Triple (RG rl (inject d (S1 rr)) br)
 onlyR (Triple (R0 rl rr))              br      = Triple (R0 rl (catenateB rr br))
+onlyR (Triple (RR rl D0 rr))           br@B1{} = Triple (R0 rl (catenateB rr br))
+onlyR (Triple (RR rl (D2 lt rt) rr))   br@B1{} = case uncap rt of ViewCap rt2 cap2 -> Cap (RO rl (D2 lt rt2) (catenateB rr br)) cap2
+onlyR (Triple (RR rl (DOR ot) rr))     br@B1{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RO rl (DOR ot2) (catenateB rr br)) cap2
+onlyR (Triple (RR rl (DOL ot) rr))     br@B1{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RO rl (DOR ot2) (catenateB rr br)) cap2
+onlyR (Triple (RR rl D0 rr))           br@B2{} = Triple (R0 rl (catenateB rr br))
+onlyR (Triple (RR rl (D2 lt rt) rr))   br@B2{} = case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 rt) (catenateB rr br)) cap2
+onlyR (Triple (RR rl (DOR ot) rr))     br@B2{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
+onlyR (Triple (RR rl (DOL ot) rr))     br@B2{} = case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
+onlyR (Triple (RR rl d rr))            br@B3{} = Triple (RG rl d (catenateB rr br))
+onlyR (Triple (RR rl d rr))            br@B4{} = Triple (RG rl d (catenateB rr br))
+onlyR (Triple (RR rl d rr))            br@B5{} = Triple (RG rl d (catenateB rr br))
+onlyR (Triple (RR rl d rr))            br@B6{} = Triple (RG rl d (catenateB rr br))
+onlyR (Triple (RR rl d rr))            br@B7{} = Triple (RG rl d (catenateB rr br))
 onlyR (Cap (RO rl (D2 lt rt) rr) cap1) br@B1{} = case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 (cap rt cap1)) (catenateB rr br)) cap2
 onlyR (Cap (RO rl (DOR ot) rr) cap1)   br@B1{} = Cap (RY rl (DOL ot) (catenateB rr br)) cap1
 onlyR (Cap (RO rl d rr) cap1)          br@B2{} = Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
@@ -588,43 +519,10 @@ onlyR (Cap (RO rl d rr) cap1)          br@B7{} = Triple (RG rl d2 (catenateB rr 
 onlyR (Cap (RY rl d rr) cap1)          br      = Triple (RG rl d2 (catenateB rr br)) where d2 = plugL cap1 d
 onlyR (Triple (RG rl d rr))            br      = Triple (RG rl d (catenateB rr br))
 
-onlyR' :: Cap RightTriple (Closed cr1) q j k -> Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q i j -> (forall cr2. Cap RightTriple (Closed cr2) q i k -> g) -> g
-onlyR' (Triple (R0 rl rr))              br@B8{} f = f $ Triple (RG rl (inject D0 (S1 rr)) br)
-onlyR' (Cap (RO rl d rr) cap1)          br@B8{} f = f $ Triple (injectWith (plugR d cap1) (S1 rr) $ \e -> RG rl e br)
-onlyR' (Cap (RY rl d rr) cap1)          br@B8{} f = f $ Triple (injectWith (plugL cap1 d) (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (RG rl d rr))            br@B8{} f = f $ Triple (injectWith d (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (RR rl d rr))            br@B8{} f = f $ Triple (injectWith d (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (R0 rl rr))              br@B9{} f = f $ Triple (RG rl (inject D0 (S1 rr)) br)
-onlyR' (Cap (RO rl d rr) cap1)          br@B9{} f = f $ Triple (injectWith (plugR d cap1) (S1 rr) $ \e -> RG rl e br)
-onlyR' (Cap (RY rl d rr) cap1)          br@B9{} f = f $ Triple (injectWith (plugL cap1 d) (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (RG rl d rr))            br@B9{} f = f $ Triple (injectWith d (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (RR rl d rr))            br@B9{} f = f $ Triple (injectWith d (S1 rr) (\e -> RG rl e br))
-onlyR' (Triple (R0 rl rr))              br      f = f $ Triple (R0 rl (catenateB rr br))
-onlyR' (Triple (RR rl D0 rr))           br@B1{} f = f $ Triple (R0 rl (catenateB rr br))
-onlyR' (Triple (RR rl (D2 lt rt) rr))   br@B1{} f = f $ case uncap rt of ViewCap rt2 cap2 -> Cap (RO rl (D2 lt rt2) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl (DOR ot) rr))     br@B1{} f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RO rl (DOR ot2) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl (DOL ot) rr))     br@B1{} f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RO rl (DOR ot2) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl D0 rr))           br@B2{} f = f $ Triple (R0 rl (catenateB rr br))
-onlyR' (Triple (RR rl (D2 lt rt) rr))   br@B2{} f = f $ case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 rt) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl (DOR ot) rr))     br@B2{} f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl (DOL ot) rr))     br@B2{} f = f $ case uncap ot of ViewCap ot2 cap2 -> Cap (RY rl (DOL ot2) (catenateB rr br)) cap2
-onlyR' (Triple (RR rl d rr))            br@B3{} f = f $ Triple (RG rl d (catenateB rr br))
-onlyR' (Triple (RR rl d rr))            br@B4{} f = f $ Triple (RG rl d (catenateB rr br))
-onlyR' (Triple (RR rl d rr))            br@B5{} f = f $ Triple (RG rl d (catenateB rr br))
-onlyR' (Triple (RR rl d rr))            br@B6{} f = f $ Triple (RG rl d (catenateB rr br))
-onlyR' (Triple (RR rl d rr))            br@B7{} f = f $ Triple (RG rl d (catenateB rr br))
-onlyR' (Cap (RO rl (D2 lt rt) rr) cap1) br@B1{} f = f $ case uncap lt of ViewCap lt2 cap2 -> Cap (RY rl (D2 lt2 (cap rt cap1)) (catenateB rr br)) cap2
-onlyR' (Cap (RO rl (DOR ot) rr) cap1)   br@B1{} f = f $ Cap (RY rl (DOL ot) (catenateB rr br)) cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B2{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B3{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B4{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B5{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B6{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RO rl d rr) cap1)          br@B7{} f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugR d cap1
-onlyR' (Cap (RY rl d rr) cap1)          br      f = f $ Triple (RG rl d2 (catenateB rr br)) where d2 = plugL cap1 d
-onlyR' (Triple (RG rl d rr))            br      f = f $ Triple (RG rl d (catenateB rr br))
+data Aux q i l where
+  Aux :: Buffer q k l -> q k l -> q i j -> Section q i l
 
-fixLeft :: Deque (Closed Green) (Closed Green) q i j -> Cap LeftTriple (Closed Green) q i j
+fixLeft :: Deque q i j -> Cap LeftTriple q i j
 fixLeft d = case d of
   D0 -> error "Impossible"
   (DOL c) -> only c
@@ -641,42 +539,47 @@ fixLeft d = case d of
   (D2 (Triple (L0 p1 s1)) (Triple (RG p2 d2 s2))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) d2 s2))
   (D2 (Triple (L0 p1 s1)) (Cap (RO p2 d2 s2) c)) -> only (Cap (OXO (catenateB (catenateB p1 s1) p2) d2 s2) c)
   (D2 (Triple (L0 p1 s1)) (Cap (RY p2 d2 s2) c)) -> only (Cap (OGY (catenateB (catenateB p1 s1) p2) d2 s2) c)
-  (D2 (Triple (LG p1 d1 s1)) (Triple (RG p2 d2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> Triple $ injectWith d1 (S3 (catenateB s1 p2) d2 rem2) $ (\e -> LG p1 e (B2 s2r2 s2r1))
-  (D2 (Triple (LG p1 d1 s1)) (Triple (R0 p2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> Triple $ injectWith d1 (S3 (catenateB s1 p2) D0 rem2) $ (\e -> LG p1 e (B2 s2r2 s2r1))
-  (D2 (Triple (LG p1 d1 s1)) (Cap (RY p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> Triple $ injectWith d1 (S3 (catenateB s1 p2) (plugL c d2) rem2) $ (\e -> LG p1 e (B2 s2r2 s2r1))
-  (D2 (Triple (LG p1 d1 s1)) (Cap (RO p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> Triple $ injectWith d1 (S3 (catenateB s1 p2) (plugR d2 c) rem2) $ (\e -> LG p1 e (B2 s2r2 s2r1))
-  (D2 (Cap (LY p1 d1 s1) cl) (Triple (RG p2 d2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> injectRight d1r (S3 (catenateB s1 p2) d2 rem2) $ (\e -> Cap (LY p1 (D2 d1l e) (B2 s2r2 s2r1)) cl)
-    DOL ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s2r2 s2r1)) c2
-  (D2 (Cap (LY p1 d1 s1) cl) (Triple (R0 p2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> injectRight d1r (S3 (catenateB s1 p2) D0 rem2) $ (\e -> Cap (LY p1 (D2 d1l e) (B2 s2r2 s2r1)) cl)
-    DOL ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s2r2 s2r1)) c2
-  (D2 (Cap (LY p1 d1 s1) cl) (Cap (RY p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> injectRight d1r (S3 (catenateB s1 p2) (plugL c d2) rem2) $ (\e -> Cap (LY p1 (D2 d1l e) (B2 s2r2 s2r1)) cl)
-    DOL ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s2r2 s2r1)) c2
-  (D2 (Cap (LY p1 d1 s1) cl) (Cap (RO p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> injectRight d1r (S3 (catenateB s1 p2) (plugR d2 c) rem2) $ (\e -> Cap (LY p1 (D2 d1l e) (B2 s2r2 s2r1)) cl)
-    DOL ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s2r2 s2r1)) c2
+  (D2 (Triple (LG p1 d1 s1)) (Triple (RG p2 d2 s2))) -> case aux s2 of H rem2 b2 -> Triple $ LG p1 (inject d1 (S3 (catenateB s1 p2) d2 rem2)) b2
+  (D2 (Triple (LG p1 d1 s1)) (Triple (R0 p2 s2))) -> case aux s2 of H rem2 b2 -> Triple $ LG p1 (inject d1 (S3 (catenateB s1 p2) D0 rem2)) b2
+  (D2 (Triple (LG p1 d1 s1)) (Cap (RY p2 d2 s2) c)) -> case aux s2 of H rem2 b2 -> Triple $ LG p1 (inject d1 (S3 (catenateB s1 p2) (plugL c d2) rem2)) b2
+  (D2 (Triple (LG p1 d1 s1)) (Cap (RO p2 d2 s2) c)) -> case aux s2 of H rem2 b2 -> Triple $ LG p1 (inject d1 (S3 (catenateB s1 p2) (plugR d2 c) rem2)) b2
+  (D2 (Cap (LY p1 d1 s1) cl) (Triple (RG p2 d2 s2))) -> case aux s2 of
+    H rem2 b2 -> case d1 of
+      D2 d1l d1r -> Cap (LY p1 (D2 d11 (injectRight d1r (S3 (catenateB s1 p2) d2 rem2))) b2) cl
+      DOL ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) b2) c2
+  (D2 (Cap (LY p1 d1 s1) cl) (Triple (R0 p2 s2))) -> case aux s2 of
+    H rem2 b2 -> case d1 of
+      D2 d1l d1r -> Cap (LY p1 (D2 d1l ( injectRight d1r (S3 (catenateB s1 p2) D0 rem2))) b2) cl
+      DOL ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) b2) c2
+  (D2 (Cap (LY p1 d1 s1) cl) (Cap (RY p2 d2 s2) c)) -> case aux s2 of 
+    H rem2 b2 -> case d1 of
+      D2 d1l d1r -> Cap (LY p1 (D2 d1l (injectRight d1r (S3 (catenateB s1 p2) (plugL c d2) rem2))) b2) cl
+      DOL ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) b2) c2
+  (D2 (Cap (LY p1 d1 s1) cl) (Cap (RO p2 d2 s2) c)) -> case aux s2 of 
+    H rem2 b2 case d1 of
+      D2 d1l d1r -> Cap (LY p1 (D2 d1l (injectRight d1r (S3 (catenateB s1 p2) (plugR d2 c) rem2))) b2) cl
+      DOL ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) b2) c2
   (D2 (Cap (LO p1 d1 s1) cl) (Triple (RG p2 d2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> case uncap (injectRightG (cap d1r cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') (B2 s2r2 s2r1)) c2
-    DOR ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) (B2 s2r2 s2r1)) c2
+    D2 d1l d1r -> case uncap (injectRight (cap d1r cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') b2) c2
+    DOR ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) d2 rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) b2) c2
   (D2 (Cap (LO p1 d1 s1) cl) (Triple (R0 p2 s2))) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> case uncap (injectRightG (cap d1r cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') (B2 s2r2 s2r1)) c2
-    DOR ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) (B2 s2r2 s2r1)) c2
+    D2 d1l d1r -> case uncap (injectRight (cap d1r cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') b2) c2
+    DOR ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) D0 rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) b2) c2
   (D2 (Cap (LO p1 d1 s1) cl) (Cap (RY p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> case uncap (injectRightG (cap d1r cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') (B2 s2r2 s2r1)) c2
-    DOR ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) (B2 s2r2 s2r1)) c2
+    D2 d1l d1r -> case uncap (injectRight (cap d1r cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') b2) c2
+    DOR ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) (plugL c d2) rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) b2) c2
   (D2 (Cap (LO p1 d1 s1) cl) (Cap (RO p2 d2 s2) c)) -> aux s2 $ \rem2 s2r2 s2r1 -> case d1 of
-    D2 d1l d1r -> case uncap (injectRightG (cap d1r cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') (B2 s2r2 s2r1)) c2
-    DOR ot -> case uncap (injectOnlyG (cap ot cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) (B2 s2r2 s2r1)) c2
+    D2 d1l d1r -> case uncap (injectRight (cap d1r cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap d1r' c2 -> Cap (LO p1 (D2 d1l d1r') b2) c2
+    DOR ot -> case uncap (injectOnly (cap ot cl) (S3 (catenateB s1 p2) (plugR d2 c) rem2)) of ViewCap ot2 c2 -> Cap (LO p1 (DOR ot2) b2) c2
   where
-    aux :: Buffer F F F F c5 c6 c7 c8 c9 q i l -> (forall k3 k4 k5 k6 k7 k8 k9 j k. Buffer F F k3 k4 k5 k6 k7 k8 k9 q k l -> q j k-> q i j -> g) -> g
+    -- TODO: uncps
+    aux :: Buffer q i l -> HPair (Buffer q) (Buffer q) i l
     aux s2 f = case ejectB s2 of
       H (Shift rem1) s2r1 -> case ejectB rem1 of
-        H (Shift rem2) s2r2 -> f rem2 s2r2 s2r1
+        H (Shift rem2) s2r2 -> H rem2 (B2 s2r2 s2r1)
       H (NoShift rem1) s2r1 -> case ejectB rem1 of
-        H (Shift rem2) s2r2 -> f rem2 s2r2 s2r1
-        H (NoShift rem2) s2r2 -> f rem2 s2r2 s2r1
+        H (Shift rem2) s2r2 -> H rem2 (B2 s2r2 s2r1)
+        H (NoShift rem2) s2r2 -> H rem2 (B2 s2r2 s2r1)
 
     only :: Cap OnlyTriple (Closed Green) q i j -> Cap LeftTriple (Closed Green) q i j
     only (Triple O0{}) = error "Impossible"
@@ -726,25 +629,25 @@ fixLeft d = case d of
            H (Shift rem1) s1r1 -> case ejectB rem1 of
              H (Shift rem2) s1r2 -> case plugL c d1 of
                D2 lt rt -> injectRight rt (S1 rem2) $ \e -> case uncap lt of ViewCap lt2 c2 -> Cap (LY p1 (D2 lt2 e) (B2 s1r2 s1r1)) c2
-               DOL ot -> case uncap (injectOnlyG ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
+               DOL ot -> case uncap (injectOnly ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
            H (NoShift rem1) s1r1 -> case ejectB rem1 of
              H (Shift rem2) s1r2 -> case plugL c d1 of
                D2 lt rt -> injectRight rt (S1 rem2) $ \e -> case uncap lt of ViewCap lt2 c2 -> Cap (LY p1 (D2 lt2 e) (B2 s1r2 s1r1)) c2
-               DOL ot -> case uncap (injectOnlyG ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
+               DOL ot -> case uncap (injectOnly ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
              H (NoShift rem2) s1r2 -> case plugL c d1 of
                D2 lt rt -> injectRight rt (S1 rem2) $ \e -> case uncap lt of ViewCap lt2 c2 -> Cap (LY p1 (D2 lt2 e) (B2 s1r2 s1r1)) c2
-               DOL ot -> case uncap (injectOnlyG ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
+               DOL ot -> case uncap (injectOnly ot (S1 rem2)) of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) (B2 s1r2 s1r1)) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
     only (Cap (OGY p1 d1 s1) c) = case ejectB s1 of
            H (Shift rem1) s1r1 -> case ejectB rem1 of
              H (Shift rem2) s1r2 -> case plugL c d1 of
                D2 lt rt -> injectRight rt (S1 rem2) $ \e -> Triple (LG p1 (D2 lt e) (B2 s1r2 s1r1))
-               DOL ot -> Triple (LG p1 (DOL (injectOnlyG ot (S1 rem2))) (B2 s1r2 s1r1))
+               DOL ot -> Triple (LG p1 (DOL (injectOnly ot (S1 rem2))) (B2 s1r2 s1r1))
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
 
@@ -795,11 +698,11 @@ fixLeft d = case d of
         H (Shift rem2) s1r2 -> LG (catenateB p1 rem2) D0 (B2 s1r2 s1r1)
         H (NoShift rem2) s1r2 -> LG (catenateB p1 rem2) D0 (B2 s1r2 s1r1)
 
-fixLeft' :: forall cl cr q i j g. Deque (Closed cl) (Closed cr) q i j -> (forall cl'. Cap LeftTriple (Closed cl') q i j -> g) -> g
-fixLeft' d f = case d of
+fixLeft' :: Deque q i j -> Cap LeftTriple q i j
+fixLeft' d = case d of
   D0 -> error "Impossible"
-  (DOL c) -> only c
-  (DOR c) -> only c
+  DOL c -> only c
+  DOR c -> only c
   (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2@B9{}))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) D0 s2))
   (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2@B8{}))) -> only (Triple (OGG (catenateB (catenateB p1 s1) p2) D0 s2))
   (D2 (Triple (LG p1 D0 s1)) (Triple (R0 p2 s2))) -> only (Triple (O0 (catenateB (catenateB (catenateB p1 s1) p2) s2)))
@@ -1029,28 +932,28 @@ fixRight d = case d of
   (D2 (Cap (LO p2 d2 s2) c)  (Triple (RG p1 d1 s1))) -> aux p2 $ \p2l1 p2l2 rem2 -> Triple $ pushWith (S3 rem2 (plugR d2 c) (catenateB s2 p1)) d1 $ \e -> RG (B2 p2l1 p2l2) e s1
   (D2 (Triple (LG p2 d2 s2)) (Cap (RO p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> Cap (RO (B2 p2l1 p2l2) (D2 (pushLeftG (S3 rem2 d2 (catenateB s2 p1)) d1l) d1r) s1) cl
-    DOR ot -> case uncap (pushOnlyG (S3 rem2 d2 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
+    DOR ot -> case uncap (pushOnly (S3 rem2 d2 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
   (D2 (Triple (L0 p2 s2)) (Cap (RO p1 d1 s1) cl)) ->    aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> Cap (RO (B2 p2l1 p2l2) (D2 (pushLeftG (S3 rem2 D0 (catenateB s2 p1)) d1l) d1r) s1) cl
-    DOR ot -> case uncap (pushOnlyG (S3 rem2 D0 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
+    DOR ot -> case uncap (pushOnly (S3 rem2 D0 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
   (D2 (Cap (LY p2 d2 s2) cr) (Cap (RO p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> Cap (RO (B2 p2l1 p2l2) (D2 (pushLeftG (S3 rem2 (plugL cr d2) (catenateB s2 p1)) d1l) d1r) s1) cl
-    DOR ot -> case uncap (pushOnlyG (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
+    DOR ot -> case uncap (pushOnly (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
   (D2 (Cap (LO p2 d2 s2) cr) (Cap (RO p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> Cap (RO (B2 p2l1 p2l2) (D2 (pushLeftG (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) d1l) d1r) s1) cl
-    DOR ot -> case uncap (pushOnlyG (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
+    DOR ot -> case uncap (pushOnly (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO (B2 p2l1 p2l2) (DOR ot2) s1) c2
   (D2 (Triple (LG p2 d2 s2)) (Cap (RY p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> case uncap (pushLeftG (S3 rem2 d2 (catenateB s2 p1)) (cap d1l cl)) of ViewCap d1l' c2 -> Cap (RY (B2 p2l1 p2l2) (D2 d1l' d1r) s1) c2
-    DOL ot -> case uncap (pushOnlyG (S3 rem2 d2 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
+    DOL ot -> case uncap (pushOnly (S3 rem2 d2 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
   (D2 (Triple (L0 p2 s2)) (Cap (RY p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> case uncap (pushLeftG (S3 rem2 D0 (catenateB s2 p1)) (cap d1l cl)) of ViewCap d1l' c2 -> Cap (RY (B2 p2l1 p2l2) (D2 d1l' d1r) s1) c2
-    DOL ot -> case uncap (pushOnlyG (S3 rem2 D0 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
+    DOL ot -> case uncap (pushOnly (S3 rem2 D0 (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
   (D2 (Cap (LY p2 d2 s2) cr) (Cap (RY p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> case uncap (pushLeftG (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap d1l cl)) of ViewCap d1l' c2 -> Cap (RY (B2 p2l1 p2l2) (D2 d1l' d1r) s1) c2
-    DOL ot -> case uncap (pushOnlyG (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
+    DOL ot -> case uncap (pushOnly (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
   (D2 (Cap (LO p2 d2 s2) cr) (Cap (RY p1 d1 s1) cl)) -> aux p2 $ \p2l1 p2l2 rem2 -> case d1 of
     D2 d1l d1r -> case uncap (pushLeftG (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) (cap d1l cl)) of ViewCap d1l' c2 -> Cap (RY (B2 p2l1 p2l2) (D2 d1l' d1r) s1) c2
-    DOL ot -> case uncap (pushOnlyG (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
+    DOL ot -> case uncap (pushOnly (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RY (B2 p2l1 p2l2) (DOL ot2) s1) c2
   where
     aux :: Buffer F F F F c5 c6 c7 c8 c9 q i l -> (forall k3 k4 k5 k6 k7 k8 k9 j k. q k l -> q j k-> Buffer F F k3 k4 k5 k6 k7 k8 k9 q i j -> g) -> g
     aux p1 f = case popB p1 of
@@ -1116,7 +1019,7 @@ fixRight d = case d of
            H p1l1 (Shift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case plugL c d1 of
                D2 lt rt -> case uncap (pushLeftG (S1 rem2) lt) of ViewCap lt2 c2 -> Cap (RY (B2 p1l1 p1l2) (D2 lt2 rt) s1) c2
-               DOL ot -> case uncap (pushOnlyG (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
+               DOL ot -> case uncap (pushOnly (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
     only (Cap (OYX p1 d1 s1@B8{}) c) = case popB p1 of
@@ -1129,18 +1032,18 @@ fixRight d = case d of
            H p1l1 (Shift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case plugL c d1 of
                D2 lt rt -> case uncap (pushLeftG (S1 rem2) lt) of ViewCap lt2 c2 -> Cap (RY (B2 p1l1 p1l2) (D2 lt2 rt) s1) c2
-               DOL ot -> case uncap (pushOnlyG (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
+               DOL ot -> case uncap (pushOnly (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
            H p1l1 (NoShift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case plugL c d1 of
                D2 lt rt -> case uncap (pushLeftG (S1 rem2) lt) of ViewCap lt2 c2 -> Cap (RY (B2 p1l1 p1l2) (D2 lt2 rt) s1) c2
-               DOL ot -> case uncap (pushOnlyG (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
+               DOL ot -> case uncap (pushOnly (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
              H p1l2 (NoShift rem2) -> case plugL c d1 of
                D2 lt rt -> case uncap (pushLeftG (S1 rem2) lt) of ViewCap lt2 c2 -> Cap (RY (B2 p1l1 p1l2) (D2 lt2 rt) s1) c2
-               DOL ot -> case uncap (pushOnlyG (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
+               DOL ot -> case uncap (pushOnly (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY (B2 p1l1 p1l2) (DOL ot2) s1) c2
                DOR _ -> error "Impossible"
                D0 -> error "Impossible"
 
@@ -1274,8 +1177,8 @@ fixRight' d f = case d of
            H p1l1 (Shift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case d1 of
                  (D2 lt rt) -> f $ Triple (RR (B2 p1l1 p1l2) (D2 (pushLeftG (S1 rem2) lt) rt) s1)
-                 (DOR ot)   -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
-                 (DOL ot)   -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
+                 (DOR ot)   -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
+                 (DOL ot)   -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
                  D0 -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (Triple (O0 (B1 (S1 rem2))))) s1)
     only (Triple (ORX p1 d1 s1@B6{})) = case popB p1 of
            H p1l1 (Shift rem1) -> case popB rem1 of
@@ -1339,19 +1242,19 @@ fixRight' d f = case d of
            H p1l1 (Shift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case d1 of
                  (D2 lt rt) -> f $ Triple (RR (B2 p1l1 p1l2) (D2 (pushLeftG (S1 rem2) lt) rt) s1)
-                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
-                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
+                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
+                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
                  D0 -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (Triple (O0 (B1 (S1 rem2))))) s1)
            H p1l1 (NoShift rem1) -> case popB rem1 of
              H p1l2 (Shift rem2) -> case d1 of
                  (D2 lt rt) -> f $ Triple (RR (B2 p1l1 p1l2) (D2 (pushLeftG (S1 rem2) lt) rt) s1)
-                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
-                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
+                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
+                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
                  D0 -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (Triple (O0 (B1 (S1 rem2))))) s1)
              H p1l2 (NoShift rem2) -> case d1 of
                  (D2 lt rt) -> f $ Triple (RR (B2 p1l1 p1l2) (D2 (pushLeftG (S1 rem2) lt) rt) s1)
-                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
-                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnlyG (S1 rem2) ot)) s1)
+                 (DOR ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
+                 (DOL ot)   ->  f $ Triple (RR (B2 p1l1 p1l2) (DOR (pushOnly (S1 rem2) ot)) s1)
                  D0 -> f $ Triple (RR (B2 p1l1 p1l2) (DOR (Triple (O0 (B1 (S1 rem2))))) s1)
     only (Cap (OYX p1 d1 s1@B7{}) c) = case popB p1 of
            H p1l1 (Shift rem1) -> case popB rem1 of
