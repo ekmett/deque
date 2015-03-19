@@ -79,7 +79,7 @@ data ViewB q i j where
   Shift :: Buffer q i j -> ViewB q i j
   NoShift :: Buffer q i j -> ViewB q i j
 
-shiftless :: ViewB q i j -> q i j
+shiftless :: ViewB q i j -> Buffer q i j
 shiftless (Shift b) = b
 shiftless (NoShift b) = b
 shiftless NoB = error "Impossible"
@@ -133,10 +133,10 @@ data OnlyTriple q i j where
   OGY :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
   OGG :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> OnlyTriple q j m
 
-instance NFData (OnlyTriple ge q i j) where
+instance NFData (OnlyTriple q i j) where
   rnf !_ = ()
 
-deriving instance Show (OnlyTriple ge q i j)
+deriving instance Show (OnlyTriple q i j)
 
 data LeftTriple q i j where
   L0 :: !(Buffer q k l) -> !(Buffer q j k) -> LeftTriple q j l
@@ -145,10 +145,10 @@ data LeftTriple q i j where
   LY :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
   LG :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> LeftTriple q j m
 
-instance NFData (LeftTriple ge q i j) where
+instance NFData (LeftTriple q i j) where
   rnf !_ = ()
 
-deriving instance Show (LeftTriple ge q i j)
+deriving instance Show (LeftTriple q i j)
 
 data Cap (r :: (* -> * -> *) -> * -> * -> *) (t :: * -> * -> *) u b where
   Opening :: Cap r s t u
@@ -163,13 +163,7 @@ instance Show (Cap r t u b) where
   show (Triple _) = "Triple"
   show (Cap _ _) = "Cap"
 
-data Nope (b :: * -> * -> *) c d
-
-data Colour = Red | Green
-
-data Dir = Le | Ri
-
-data RightTriple (q :: * -> * -> *) i j where
+data RightTriple q i j where
   R0 :: !(Buffer q k l) -> !(Buffer q j k) -> RightTriple q j l
   RR :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
   RO :: !(Buffer q l m) -> !(Deque (StoredTriple q) k l) -> !(Buffer q j k) -> RightTriple q j m
@@ -875,7 +869,7 @@ fixRight d = case d of
         DOR ot   -> case uncap (pushOnly (S1 rem2) ot) of
           ViewCap ot2 c2 -> Cap (RO l2 (DOR ot2) s1) c2
     only (Cap (OOX p1 d1 s1@B7{}) c) = case aux p1 of
-      H l2 rem2 -> case pushOnly (S1 rem2) ot of
+      H l2 rem2 -> case pushOnly (S1 rem2) (plugR d1 c) of
         D2 lt rt -> case uncap lt of ViewCap lt2 c2 -> Cap (RY l2 (D2 lt2 rt) s1) c2
         DOL ot -> case uncap ot of ViewCap ot2 c2 -> Cap (RY l2 (DOL ot2) s1) c2
         DOR ot -> case uncap ot of ViewCap ot2 c2 -> Cap (RY l2 (DOL ot2) s1) c2
@@ -896,7 +890,7 @@ fixRight d = case d of
         D0 -> Triple $ RR l2 (DOR (Triple (O0 (B1 (S1 rem2))))) s1
     only (Cap (OYX p1 d1 s1@B7{}) c) = case aux p1 of
       H l2 rem2 -> case plugL c d1 of
-        D2 lt rt -> case uncap (pushOnly (S1 rem2) (cap ot c)) of ViewCap lt2 c2 -> Cap (RY l2 (D2 lt2 rt) s1) c2
+        D2 lt rt -> case uncap (pushLeft (S1 rem2) lt) of ViewCap lt2 c2 -> Cap (RY l2 (D2 lt2 rt) s1) c2
         DOL ot -> case uncap (pushOnly (S1 rem2) ot) of ViewCap ot2 c2 -> Cap (RY l2 (DOL ot2) s1) c2
         DOR _ -> error "Impossible"
         D0 -> error "Impossible"
@@ -1145,8 +1139,8 @@ repairLeftTriple l = case l of
   LG{} -> l
 
 repairCap :: Repairable r => Cap r q i j -> Cap r q i j
-repairCap c = case uncap c of
-  ViewCap t c' -> cap t (repair c')
+repairCap (Triple c) = Triple (repair c)
+repairCap (Cap o c) = Cap o (repair c)
 
 repairRightTriple :: RightTriple q i j -> RightTriple q i j
 repairRightTriple r = case r of
