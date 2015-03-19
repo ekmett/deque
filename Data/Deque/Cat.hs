@@ -280,7 +280,7 @@ pushLeft a (Triple (LR bl (DOL ot) br))          = case uncap ot of ViewCap ot2 
 pushLeft a (Triple (LR bl (DOR ot) br))          = case uncap ot of ViewCap ot2 cap2 -> Cap (LO (pushB a bl) (DOR ot2) br) cap2
 pushLeft a (Triple (LG bl d br))                 = Triple (LG (pushB a bl) d br)
 
-pushOnly :: q j k -> Cap OnlyTriple (Closed cl) q i j -> Cap OnlyTriple q i k
+pushOnly :: q j k -> Cap OnlyTriple q i j -> Cap OnlyTriple q i k
 pushOnly a (Triple (O0 b))                        = Triple (O0 (pushB a b))
 pushOnly a (Cap (OOX bl d br@B6{}) cap1)          = Cap (OXO (pushB a bl) d br) cap1
 pushOnly a (Cap (OOX bl (D2 lt rt) br@B7{}) cap1) = case uncap lt of ViewCap lt2 cap2 -> Cap (OYX (pushB a bl) (D2 lt2 (cap rt cap1)) br) cap2
@@ -718,7 +718,7 @@ fixLeft d = case d of
     only (Triple (OXR p1@B7{} d1 s1)) = case aux s1 of
       H rem2 r2 -> case injectWith d1 (S1 rem2) of
         D0 -> error "Impossible"
-        D2 lt rt) -> case uncap lt of ViewCap lt2 c2 -> Cap (LY p1 (D2 lt2 rt) r2) c2
+        D2 lt rt -> case uncap lt of ViewCap lt2 c2 -> Cap (LY p1 (D2 lt2 rt) r2) c2
         DOL ot -> case uncap ot of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) r2) c2
         DOR ot -> case uncap ot of ViewCap ot2 c2 -> Cap (LY p1 (DOL ot2) r2) c2
     only (Triple (OXR p1@B8{} d1 s1)) = case aux s1 of H rem2 r2 -> Triple $ LG p1 (inject d1 (S1 rem2)) r2
@@ -754,7 +754,7 @@ fixLeft d = case d of
     onlyPS p1 s1@B9{} = case popB s1 of
         H s1l1 srem1 -> case popB (shiftless srem1) of
           H s1l2 srem2 -> case popB (shiftless srem2) of
-            H s1l3 srem3 -> case case aux (shiftless rem3) of
+            H s1l3 srem3 -> case aux (shiftless rem3) of
               H rem5 s2 -> Triple $ LG (injectB (injectB (injectB p1 s1l1) s1l2) s1l3) (push (S1 rem5) D0) s2
 
     onlyPS p1 s1 = case ejectB s1 of
@@ -805,7 +805,7 @@ fixRight d = case d of
   D2 (Cap (LY p2 d2 s2) cr) (Cap (RO p1 d1 s1) cl) -> case aux p2 of
     H l2 rem2 -> case d1 of
       D2 d1l d1r -> Cap (RO l2 (D2 (pushLeft (S3 rem2 (plugL cr d2) (catenateB s2 p1)) d1l) d1r) s1) cl
-      DOR ot -> case uncap (pushOnly (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl))) of ViewCap ot2 c2 -> Cap (RO l2 (DOR ot2) s1) c2
+      DOR ot -> case uncap (pushOnly (S3 rem2 (plugL cr d2) (catenateB s2 p1)) (cap ot cl)) of ViewCap ot2 c2 -> Cap (RO l2 (DOR ot2) s1) c2
   D2 (Cap (LO p2 d2 s2) cr) (Cap (RO p1 d1 s1) cl) -> case aux p2 of
     H l2 rem2 -> case d1 of
       D2 d1l d1r -> Cap (RO l2 (D2 (pushLeft (S3 rem2 (plugR d2 cr) (catenateB s2 p1)) d1l) d1r) s1) cl
