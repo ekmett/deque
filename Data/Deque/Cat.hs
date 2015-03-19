@@ -622,9 +622,6 @@ onlyR (Cap (RO rl d rr) cap1)          br      = Triple (RG rl (plugR d cap1) (c
 onlyR (Cap (RY rl d rr) cap1)          br      = Triple (RG rl d2 (catenateB rr br)) where d2 = plugL cap1 d
 onlyR (Triple (RG rl d rr))            br      = Triple (RG rl d (catenateB rr br))
 
-data Aux q i l where
-  Aux :: Buffer q k l -> q k l -> q i j -> Section q i l
-
 fixLeft :: Deque q i j -> Cap LeftTriple q i j
 fixLeft d = case d of
   D0 -> error "Impossible"
@@ -698,7 +695,7 @@ fixLeft d = case d of
     aux :: Buffer q i l -> HPair (Buffer q) (Buffer q) i l
     aux s2 = case ejectB s2 of
       H srem1 s2r1 -> case ejectB (shiftless srem1) of
-        H srem2 s2r2 -> H (shiftless rem2) (B2 s2r2 s2r1)
+        H srem2 s2r2 -> H (shiftless srem2) (B2 s2r2 s2r1)
 
     only :: Cap OnlyTriple q i j -> Cap LeftTriple q i j
     only (Triple O0{}) = error "Impossible"
@@ -841,7 +838,7 @@ fixRight d = case d of
     only (Triple (OGG p1 D0 s1)) = onlyPS p1 s1
     only (Triple (ORX p1 D0 s1)) = onlyPS p1 s1
     only (Triple (OXR p1 D0 s1)) = onlyPS p1 s1
-    only (Triple (OGG p1 d1 s1)) = case aux p1 of H1 l2 rem2 -> Triple $ RG b2 (push (S1 rem2) d1) s1
+    only (Triple (OGG p1 d1 s1)) = case aux p1 of H l2 rem2 -> Triple $ RG l2 (push (S1 rem2) d1) s1
     only (Triple (ORX p1 d1 s1@B5{})) = case aux p1 of
       H l2 rem2 -> case d1 of
         D2 lt rt -> Triple (RR l2 (D2 (pushLeft (S1 rem2) lt) rt) s1)
