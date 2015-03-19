@@ -524,46 +524,46 @@ cat0O bl (Triple (OGG ll d lr)) = Triple (OGG (catenateB bl ll) d lr)
 catO0 :: Cap OnlyTriple q j k -> Buffer q i j -> Cap OnlyTriple q i k
 catO0 (Triple O0{}) _ = error "Impossible"
 catO0 (Cap (OOX rl d rr) cap1) br@B8{} = case d of
-  D2 lt rt -> case uncap (injectRightG (cap rt cap1) (S1 rr)) of ViewCap rt2 cap2 -> Cap (OOX rl (D2 lt rt2) br) cap2
-  DOR ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OOX rl (DOR ot2) br) cap2
+  D2 lt rt -> case uncap (injectRight (cap rt cap1) (S1 rr)) of ViewCap rt2 cap2 -> Cap (OOX rl (D2 lt rt2) br) cap2
+  DOR ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OOX rl (DOR ot2) br) cap2
 catO0 (Cap (OXO rl@B7{} d rr) cap1) br@B8{} = case d of
-  D2 lt rt -> case uncap lt of ViewCap lt2 cap2 -> Cap (OYX rl (D2 lt2 (injectRightG (cap rt cap1) (S1 rr))) br) cap2
-  DOR ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
+  D2 lt rt -> case uncap lt of ViewCap lt2 cap2 -> Cap (OYX rl (D2 lt2 (injectRight (cap rt cap1) (S1 rr))) br) cap2
+  DOR ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
 catO0 (Cap (OXO rl@B8{} d rr) cap1) br@B8{} = case d of
-  D2 lt rt -> Triple (OGG rl (D2 lt (injectRightG (cap rt cap1) (S1 rr))) br)
-  DOR ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  D2 lt rt -> Triple (OGG rl (D2 lt (injectRight (cap rt cap1) (S1 rr))) br)
+  DOR ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Cap (OXO rl@B9{} d rr) cap1) br@B8{} = case d of
-  D2 lt rt -> Triple (OGG rl (D2 lt (injectRightG (cap rt cap1) (S1 rr))) br)
-  DOR ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  D2 lt rt -> Triple (OGG rl (D2 lt (injectRight (cap rt cap1) (S1 rr))) br)
+  DOR ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Cap (OYX rl d rr) cap1) br@B8{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Cap (OYX rl (D2 lt e) br) cap1
-  DOL ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
+  DOL ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
 catO0 (Cap (OGY rl d rr) cap1) br@B8{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Triple (OGG rl (D2 (cap lt cap1) e) br)
-  DOL ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  DOL ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Triple (OGG rl d rr)) br@B8{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Triple (OGG rl (D2 lt e) br)
   DOL ot -> injectOnly ot (S1 rr) $ \e -> Triple (OGG rl (DOL e) br)
   DOR ot -> injectOnly ot (S1 rr) $ \e -> Triple (OGG rl (DOL e) br)
   D0 -> Triple (OGG rl (DOL (Triple (O0 (B1 (S1 rr))))) br)
 catO0 (Cap (OOX rl d rr) cap1) br@B9{} = case d of
-  D2 lt rt -> case uncap (injectRightG (cap rt cap1) (S1 rr)) of ViewCap rt2 cap2 -> Cap (OOX rl (D2 lt rt2) br) cap2
-  DOR ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OOX rl (DOR ot2) br) cap2
+  D2 lt rt -> case uncap (injectRight (cap rt cap1) (S1 rr)) of ViewCap rt2 cap2 -> Cap (OOX rl (D2 lt rt2) br) cap2
+  DOR ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OOX rl (DOR ot2) br) cap2
 catO0 (Cap (OXO rl@B7{} d rr) cap1) br@B9{} = case d of
-  D2 lt rt -> case uncap lt of ViewCap lt2 cap2 -> Cap (OYX rl (D2 lt2 (injectRightG (cap rt cap1) (S1 rr))) br) cap2
-  DOR ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
+  D2 lt rt -> case uncap lt of ViewCap lt2 cap2 -> Cap (OYX rl (D2 lt2 (injectRight (cap rt cap1) (S1 rr))) br) cap2
+  DOR ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
 catO0 (Cap (OXO rl@B8{} d rr) cap1) br@B9{} = case d of
-  D2 lt rt -> Triple (OGG rl (D2 lt (injectRightG (cap rt cap1) (S1 rr))) br)
-  DOR ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  D2 lt rt -> Triple (OGG rl (D2 lt (injectRight (cap rt cap1) (S1 rr))) br)
+  DOR ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Cap (OXO rl@B9{} d rr) cap1) br@B9{} = case d of
-  D2 lt rt -> Triple (OGG rl (D2 lt (injectRightG (cap rt cap1) (S1 rr))) br)
-  DOR ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  D2 lt rt -> Triple (OGG rl (D2 lt (injectRight (cap rt cap1) (S1 rr))) br)
+  DOR ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Cap (OYX rl d rr) cap1) br@B9{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Cap (OYX rl (D2 lt e) br) cap1
-  DOL ot -> case uncap (injectOnlyG (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
+  DOL ot -> case uncap (injectOnly (cap ot cap1) (S1 rr)) of ViewCap ot2 cap2 -> Cap (OYX rl (DOL ot2) br) cap2
 catO0 (Cap (OGY rl d rr) cap1) br@B9{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Triple (OGG rl (D2 (cap lt cap1) e) br)
-  DOL ot -> Triple (OGG rl (DOL (injectOnlyG (cap ot cap1) (S1 rr))) br)
+  DOL ot -> Triple (OGG rl (DOL (injectOnly (cap ot cap1) (S1 rr))) br)
 catO0 (Triple (OGG rl d rr)) br@B9{} = case d of
   D2 lt rt -> injectRight rt (S1 rr) $ \e -> Triple (OGG rl (D2 lt e) br)
   DOL ot -> injectOnly ot (S1 rr) $ \e -> Triple (OGG rl (DOL e) br)
@@ -754,7 +754,7 @@ fixLeft d = case d of
     onlyPS p1 s1@B9{} = case popB s1 of
         H s1l1 srem1 -> case popB (shiftless srem1) of
           H s1l2 srem2 -> case popB (shiftless srem2) of
-            H s1l3 srem3 -> case aux (shiftless rem3) of
+            H s1l3 srem3 -> case aux (shiftless srem3) of
               H rem5 s2 -> Triple $ LG (injectB (injectB (injectB p1 s1l1) s1l2) s1l3) (push (S1 rem5) D0) s2
 
     onlyPS p1 s1 = case ejectB s1 of
@@ -833,8 +833,8 @@ fixRight d = case d of
   where
     aux :: Buffer q i' j' -> HPair (Buffer q) i' j'
     aux p1 g = case popB p1 of
-      H p1l1 srem1 -> case popB (shiftless rem1) of
-        H p1l2 srem2 -> H (B2 p1l1 p1l2) (shiftless rem2)
+      H p1l1 srem1 -> case popB (shiftless srem1) of
+        H p1l2 srem2 -> H (B2 p1l1 p1l2) (shiftless srem2)
 
     only :: Cap OnlyTriple q i j -> Cap RightTriple q i j
     only (Triple O0{}) = error "Impossible"
@@ -918,7 +918,7 @@ fixRight d = case d of
     onlyPS p1@B9{} s1 = case ejectB p1 of
         H srem1 p1r1 -> case ejectB (shiftless srem1) of
           H srem2 p1r2 -> case ejectB (shiftless srem2) of
-            H srem3 p1r3 -> case aux (shiftless rem3) of
+            H srem3 p1r3 -> case aux (shiftless srem3) of
               H p2 rem5 -> Triple $ RG p2 (push (S1 rem5) D0) $ pushB p1r3 (pushB p1r2 (pushB p1r1 s1))
 
     onlyPS p1 s1 = case aux p1 of
