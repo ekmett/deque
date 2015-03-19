@@ -435,7 +435,7 @@ onlyL bl      (Cap (LO ll d lr) cap1)          = Triple (LG (catenateB bl ll) (p
 onlyL bl      (Cap (LY ll d lr) cap1)          = Triple (LG (catenateB bl ll) d2 lr) where d2 = plugL cap1 d
 onlyL bl      (Triple (LG ll d lr))            = Triple (LG (catenateB bl ll) d lr)
 
-cat0O :: Buffer k1 k2 k3 k4 k5 k6 k7 k8 k9 q j k -> Cap OnlyTriple (Closed Green) q i j -> Cap OnlyTriple (Closed Green) q i k
+cat0O :: Buffer q j k -> Cap OnlyTriple q i j -> Cap OnlyTriple q i k
 cat0O _ (Triple O0{}) = error "Impossible"
 cat0O bl@B8{} (Cap (OXO ll d lr) cap1) = case d of
   D2 lt rt ->  Cap (OXO bl (D2 (pushLeft (S1 ll) lt) rt) lr) cap1
@@ -700,7 +700,7 @@ fixLeft d = case d of
       H srem1 s2r1 -> case ejectB (shiftless srem1) of
         H srem2 s2r2 -> H (shiftless rem2) (B2 s2r2 s2r1)
 
-    only :: Cap OnlyTriple (Closed cl'') q i j -> Cap LeftTriple q i j
+    only :: Cap OnlyTriple q i j -> Cap LeftTriple q i j
     only (Triple O0{}) = error "Impossible"
     only (Triple (OGG p1 D0 s1)) = onlyPS p1 s1
     only (Triple (ORX p1 D0 s1)) = onlyPS p1 s1
@@ -924,9 +924,6 @@ fixRight d = case d of
     onlyPS p1 s1 = case aux p1 of
       H l2 rem2 -> Triple $ RG l2 D0 (catenateB rem2 s1)
 
-data ClosedDeque q i j where
-  CD :: Deque (Closed lg) (Closed rg) q i j -> ClosedDeque q i j
-
 data View l r a c where
   Empty :: View l r a a
   (:|) :: l b c -> r a b -> View l r a c
@@ -934,7 +931,7 @@ data View l r a c where
 data View3 q a c where
   V0 :: View3 q a a
   V1 :: q a c -> View3 q a c
-  V3 :: q c d -> Deque (Closed lg) (Closed rg) q b c -> q a b -> View3 q a d
+  V3 :: q c d -> Deque q b c -> q a b -> View3 q a d
 
 popNoRepair :: Deque q i j -> View q (Deque q) i j
 popNoRepair d = case d of
@@ -970,7 +967,7 @@ popLeftNoRepair c = case c of
     H p1l1 (Shift rem1@B4{}) -> Left $ p1l1 `H` catenateB rem1 s1
     H p1l1 srem1 -> Right $ p1l1 `H` Triple (L0 (shiftless srem1) s1)
 
-ejectRightNoRepair :: Cap RightTriple q i j -> Either (HPair (Buffer q) q i j) (HPair (Cap RightTriple (Closed rg) q) q i j)
+ejectRightNoRepair :: Cap RightTriple q i j -> Either (HPair (Buffer q) q i j) (HPair (Cap RightTriple q) q i j)
 ejectRightNoRepair c = case c of
   Triple (RG p1 d1 s1) -> case ejectB s1 of
     H (Shift rem1@B7{}) s1r1 -> case d1 of
@@ -991,7 +988,7 @@ ejectRightNoRepair c = case c of
     H (Shift rem1@B4{}) s1r1 -> Left $ catenateB p1 rem1 `H` s1r1
     H srem1 s1r1 -> Right $ Triple (R0 p1 (shiftless srem1)) `H` s1r1
 
-popOnlyNoRepair :: Cap OnlyTriple (Closed Green) q i j -> View q (Deque q) i j
+popOnlyNoRepair :: Cap OnlyTriple q i j -> View q (Deque q) i j
 popOnlyNoRepair (Triple (O0 p1)) = case popB p1 of
       H p1l1 NoB -> p1l1 :| D0
       H p1l1 srem1 -> p1l1 :| DOL (Triple (O0 (shiftless srem1)))
@@ -1117,7 +1114,7 @@ popThenPush d f = case d of
   DOL ot -> only ot >>= \bar -> case bar of H foo c -> return $ foo :| DOL c
   DOR ot -> only ot >>= \bar -> case bar of H foo c -> return $ foo :| DOR c
   where
-    only :: Cap OnlyTriple (Closed cl) q i' k -> m (HPair foo (Cap OnlyTriple (Closed cl) q) i' k)
+    only :: Cap OnlyTriple q i' k -> m (HPair foo (Cap OnlyTriple q) i' k)
     only (Triple (O0 p1)) = case popB p1 of
       H p1l1 NoB -> f p1l1 >>= \bar -> case bar of  H foo q -> return $ foo `H` (Triple (O0 (B1 q)))
       H p1l1 (Shift rem1) -> f p1l1 >>= \bar -> case bar of  H foo q -> return $ foo `H` (Triple (O0 (pushB q rem1)))
@@ -1143,9 +1140,9 @@ popThenPush d f = case d of
 
 repairLeftTriple :: LeftTriple q i j -> LeftTriple q i j
 repairLeftTriple l = case l of
-  (LR p1 d1 s1) -> case popNoRepair d1 of
-    (S3 p2 d2 s2) :| d1' -> LG (catenateB p1 p2) (catenate' d2 (pushWith (S1 s2) d1')) s1
-    (S1 p2) :| d1' -> LG (catenateB p1 p2) d1' s1
+  LR p1 d1 s1 -> case popNoRepair d1 of
+    S3 p2 d2 s2 :| d1' -> LG (catenateB p1 p2) (catenate' d2 (push (S1 s2) d1')) s1
+    S1 p2 :| d1' -> LG (catenateB p1 p2) d1' s1
     Empty -> L0 p1 s1
   L0{} -> l
   LG{} -> l
@@ -1202,7 +1199,7 @@ instance Repairable OnlyTriple where repair = repairOnlyTriple
 
 instance Repairable RightTriple where repair = repairRightTriple
 
-pop :: Deque (Closed Green) (Closed Green) q i j -> View q (Deque (Closed Green) (Closed Green) q) i j
+pop :: Deque q i j -> View q (Deque q) i j
 pop d = case popNoRepair d of
   Empty -> Empty
   a :| D2 lt rt -> a :| D2 (repairCap lt) (repairCap rt) -- Right triple shouldn't need repair here.
@@ -1218,13 +1215,13 @@ instance NFData (Foo a b) where
 
 deriving instance Show (Foo a b)
 
-mkDeq :: Int -> Int -> Deque (Closed Green) (Closed Green) Foo () ()
+mkDeq :: Int -> Int -> Deque Foo () ()
 mkDeq m n = foldr (\a d -> catenate d $ iterate (push (F a)) empty !! m) empty [1..n]
 
-sumDeq :: Deque (Closed Green) (Closed Green) Foo () () -> Int
+sumDeq :: Deque Foo () () -> Int
 sumDeq = sum . unfoldr go
   where
-    go :: Deque (Closed Green) (Closed Green) Foo () () -> Maybe (Int, Deque (Closed Green) (Closed Green) Foo () ())
+    go :: Deque Foo () () -> Maybe (Int, Deque Foo () ())
     go d = case pop d of
       F a :| d' -> Just (a, d')
       Empty -> Nothing
